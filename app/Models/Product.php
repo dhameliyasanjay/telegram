@@ -14,6 +14,7 @@ class Product extends Model
         'product_name',
         'latest_price',
         'latest_photo_url',
+        'photo_hash',
         'latest_message_id',
         'first_seen_at',
         'last_updated_at',

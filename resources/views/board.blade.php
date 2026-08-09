@@ -244,7 +244,15 @@ body {
     </span>
     <input type="text" id="searchInput" placeholder="Search products across all groups…" oninput="debounceSearch()">
   </div>
-  <select class="filter-select" id="sortSelect" onchange="loadBoard()">
+  <input type="file" id="photoFilterInput" style="display:none" accept="image/*" onchange="handlePhotoFilter(event)">
+  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photoFilterInput').click()" title="Filter by Photo">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+  </button>
+  <div id="activePhotoFilter" style="display:none; align-items:center; gap:8px; background:rgba(59,130,246,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:500; border:1px solid rgba(59,130,246,0.3);">
+    <span>📷 Image Filter</span>
+    <button style="background:transparent;border:none;color:inherit;cursor:pointer;display:flex;align-items:center;" onclick="clearPhotoFilter()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <select class="filter-select" id="sortSelect" onchange="loadBoard()" style="margin-left:auto">
     <option value="latest">Latest Updated First</option>
     <option value="price_asc">Price: Low to High</option>
     <option value="price_desc">Price: High to Low</option>
@@ -299,6 +307,7 @@ body {
 const API = '/api';
 let currentPage = 1;
 let currentGroup = null;
+let currentPhotoHash = null;
 let searchTimer = null;
 let allGroups = [];
 
@@ -458,8 +467,12 @@ async function loadBoard(page = 1) {
   currentPage = page;
   const search = document.getElementById('searchInput').value.trim();
   let url = `${API}/board?per_page=24&page=${page}`;
-  if (currentGroup) url += `&group_id=${currentGroup}`;
-  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (currentPhotoHash) {
+      url += `&photo_hash=${currentPhotoHash}`;
+  } else {
+      if (currentGroup) url += `&group_id=${currentGroup}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+  }
 
   try {
     const r = await fetch(url);
@@ -640,6 +653,43 @@ function timeAgo(iso) {
   if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
   return `${Math.floor(diff/86400)}d ago`;
 }
+
+async function handlePhotoFilter(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('photo', file);
+        
+        const r = await fetch(`${API}/board/hash-photo`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.message || 'Failed to hash image.');
+        
+        currentPhotoHash = d.photo_hash;
+        
+        document.getElementById('activePhotoFilter').style.display = 'flex';
+        loadBoard(1);
+    } catch (err) {
+        toast(err.message || 'Failed to compute image hash.', 'error');
+    }
+    e.target.value = '';
+}
+
+function clearPhotoFilter() {
+    currentPhotoHash = null;
+    document.getElementById('activePhotoFilter').style.display = 'none';
+    loadBoard(1);
+}
+
 function toast(msg, type='') {
   const wrap = document.getElementById('toastWrap');
   const el = document.createElement('div');

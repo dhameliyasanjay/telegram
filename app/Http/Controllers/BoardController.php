@@ -20,15 +20,21 @@ class BoardController extends Controller
         $search  = $request->query('search');
         $perPage = min((int) $request->query('per_page', 50), 200);
 
+        $photoHash = $request->query('photo_hash');
+
         $query = Product::with('group')
             ->orderByDesc('last_updated_at');
 
-        if ($groupId) {
-            $query->where('group_id', $groupId);
-        }
+        if ($photoHash) {
+            $query->where('photo_hash', $photoHash);
+        } else {
+            if ($groupId) {
+                $query->where('group_id', $groupId);
+            }
 
-        if ($search) {
-            $query->where('product_name', 'like', "%{$search}%");
+            if ($search) {
+                $query->where('product_name', 'like', "%{$search}%");
+            }
         }
 
         $products = $query->paginate($perPage);
@@ -92,6 +98,29 @@ class BoardController extends Controller
                 'group_title' => $product->group?->title,
             ],
             'history' => $history,
+        ]);
+    }
+
+    /**
+     * POST /api/board/hash-photo
+     * Computes the SHA-256 hash of an uploaded photo for filtering.
+     */
+    public function hashPhoto(Request $request): JsonResponse
+    {
+        $request->validate([
+            'photo' => 'required|file|image|max:10240', // 10MB max
+        ]);
+
+        $file = $request->file('photo');
+        $cmd = 'python3 ' . base_path('phash.py') . ' ' . escapeshellarg($file->getRealPath());
+        $hash = trim(shell_exec($cmd));
+
+        if (strlen($hash) !== 16) {
+            return response()->json(['message' => 'Failed to process image'], 500);
+        }
+
+        return response()->json([
+            'photo_hash' => $hash,
         ]);
     }
 }

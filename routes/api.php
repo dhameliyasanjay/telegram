@@ -14,4 +14,5 @@ Route::post('/groups/{id}/sync', [GroupController::class, 'sync']);
 // ── Board ───────────────────────────────────────────────────────────────────
 Route::get('/board',           [BoardController::class, 'index']);
 Route::get('/board/stats',     [BoardController::class, 'stats']);
+Route::post('/board/hash-photo', [BoardController::class, 'hashPhoto']);
 Route::get('/products/{id}/history', [BoardController::class, 'history']);

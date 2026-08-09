@@ -49,8 +49,17 @@ class SyncTelegramGroup implements ShouldQueue
             $messages = $telegramClient->getMessages($client, $this->group->invite_link, $this->limit, $this->offsetId);
             $stats    = ['new' => 0, 'updated' => 0, 'skipped' => 0];
 
-            // Process oldest to newest
+            $thirtyDaysAgo = strtotime('-30 days');
+            $reachedLimit = false;
+
+            // Process oldest to newest within this batch
             foreach (array_reverse($messages) as $msg) {
+                // If a message is older than 30 days, skip processing and downloading
+                if (isset($msg['date']) && $msg['date'] < $thirtyDaysAgo) {
+                    $reachedLimit = true;
+                    continue;
+                }
+
                 $parsed = $parser->parse($msg);
                 if (!$parsed) continue;
 
@@ -63,13 +72,17 @@ class SyncTelegramGroup implements ShouldQueue
             Log::info("Background sync completed for {$this->group->title}", $stats);
 
             // If recursive is enabled and we fetched some messages, there are probably more messages
-            // (Using count === limit is unreliable due to deleted messages reducing the batch size)
+            // We only continue recursion if we haven't hit the 30-day limit
             if ($this->recursive && count($messages) > 0) {
-                $lastMsgId = end($messages)['id'] ?? 0;
-                if ($lastMsgId > 1) { // 1 is usually the creation message of the channel
-                    Log::info("Dispatching next batch for {$this->group->title} starting from offset ID: {$lastMsgId}");
-                    // Dispatch next chunk
-                    self::dispatch($this->group, $this->limit, true, $lastMsgId);
+                if ($reachedLimit) {
+                    Log::info("30-day historical limit reached for {$this->group->title}. Stopping recursive sync.");
+                } else {
+                    $lastMsgId = end($messages)['id'] ?? 0;
+                    if ($lastMsgId > 1) { // 1 is usually the creation message of the channel
+                        Log::info("Dispatching next batch for {$this->group->title} starting from offset ID: {$lastMsgId}");
+                        // Dispatch next chunk
+                        self::dispatch($this->group, $this->limit, true, $lastMsgId);
+                    }
                 }
             }
 

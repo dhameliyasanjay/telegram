@@ -54,18 +54,11 @@ class MessageParserService
     }
 
     /**
-     * Extract the first recognizable price from a text string.
-     * Returns null if none found.
+     * Get all price-matching regex patterns.
      */
-    public function extractPrice(string $text): ?float
+    private function getPricePatterns(): array
     {
-        // Patterns (most specific first):
-        // 1. Currency symbol followed by number:  $1,500  ₹ 1500  €1.500,00
-        // 2. Number followed by currency code:    1500 USD  1500 INR  1500 AED
-        // 3. Number followed by currency word:    1500 rupees  1500 dollars
-        // 4. Bare number that looks like a price: 1500  (only if surrounded by context)
-
-        $patterns = [
+        return [
             // ₹1,500  $1500.00  €1.500
             '/[\$₹€£¥₪₺₩฿]\s*([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/u',
             // Rs 1500 / Rs. 1500 / INR 1500
@@ -81,8 +74,16 @@ class MessageParserService
             // Price: 1500 / Rate: 1500 / Cost: 1500 (Removed generic words like 'total' or 'amount' to avoid qty mismatches)
             '/(?:price|rate|cost|mrp|sp|selling\s*price)[\s:=]+([₹$€£¥]?\s*[\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/i',
         ];
+    }
 
-        foreach ($patterns as $pattern) {
+    /**
+     * Extract the first recognizable price from a text string.
+     * Returns null if none found.
+     */
+    public function extractPrice(string $text): ?float
+    {
+
+        foreach ($this->getPricePatterns() as $pattern) {
             if (preg_match($pattern, $text, $matches)) {
                 // $matches[1] has the number part
                 $raw = $matches[1] ?? $matches[0];
@@ -103,16 +104,12 @@ class MessageParserService
      */
     public function buildProductKey(string $text): string
     {
-        // Remove URLs
-        $clean = preg_replace('/https?:\/\/\S+/i', '', $text);
-
+        $name = $this->buildProductName($text);
+        
         // Remove emoji (Unicode ranges for emoji)
-        $clean = preg_replace('/[\x{1F000}-\x{1FFFF}]/u', '', $clean ?? '');
+        $clean = preg_replace('/[\x{1F000}-\x{1FFFF}]/u', '', $name ?? '');
         $clean = preg_replace('/[\x{2600}-\x{26FF}]/u', '', $clean ?? '');
         $clean = preg_replace('/[\x{2700}-\x{27BF}]/u', '', $clean ?? '');
-
-        // Remove prices (strip currency+numbers so price changes don't create new keys)
-        $clean = preg_replace('/[\$₹€£¥₪₺₩฿]?\s*\d[\d,\.]*\s*(?:USD|INR|AED|SAR|EUR|GBP|rupees?|dollars?|rs\.?|dhs?\.?)?/iu', ' ', $clean ?? '');
 
         // Lowercase
         $clean = mb_strtolower($clean ?? '');
@@ -136,8 +133,27 @@ class MessageParserService
         $lines = preg_split('/[\r\n]+/', trim($text));
         foreach ($lines as $line) {
             $line = trim($line);
+            
+            // Skip generic identifier/quantity lines
+            if (preg_match('/^(?:code|item code|sku)?\s*[:=\-]?\s*\d+$/i', $line)) continue;
+            if (preg_match('/^\d+\s*(?:ctn|pcs|piece|kg|g|ml|l|box|carton)/i', $line)) continue;
+
             if (!empty($line) && mb_strlen($line) > 2) {
-                // Take up to 200 chars
+                // Strip trailing price from the product name if present
+                foreach ($this->getPricePatterns() as $pattern) {
+                    // Extract existing modifiers
+                    preg_match('/\/([a-z]*)$/i', $pattern, $modMatches);
+                    $modifiers = $modMatches[1] ?? 'i';
+                    if (!str_contains($modifiers, 'u')) $modifiers .= 'u';
+                    if (!str_contains($modifiers, 'i')) $modifiers .= 'i';
+
+                    $endPattern = preg_replace('/\/[a-z]*$/i', '(?:\s*\-)?\s*$/' . $modifiers, $pattern);
+                    $line = preg_replace($endPattern, '', $line);
+                }
+                
+                $line = preg_replace('/\s+[\-\*\#\~\:\;]+\s*$/', '', trim($line));
+                $line = rtrim($line, " \t\n\r\0\x0B-*#~:;");
+                
                 return mb_substr($line, 0, 200);
             }
         }

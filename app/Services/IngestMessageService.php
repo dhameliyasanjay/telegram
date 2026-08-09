@@ -35,8 +35,19 @@ class IngestMessageService
 
         // Download photo if media present and client provided
         $photoUrl = null;
+        $photoHash = null;
         if ($client && ($parsed['has_media'] ?? false)) {
             $photoUrl = $this->telegramClient->downloadPhoto($client, $parsed['raw_message'] ?? []);
+            if ($photoUrl) {
+                $localPath = public_path(str_replace('/storage/', 'storage/', $photoUrl));
+                if (file_exists($localPath)) {
+                    $cmd = 'python3 ' . base_path('phash.py') . ' ' . escapeshellarg($localPath);
+                    $output = trim(shell_exec($cmd));
+                    if (strlen($output) === 16) {
+                        $photoHash = $output;
+                    }
+                }
+            }
         }
 
         $price       = $parsed['price'] ?? null;
@@ -46,9 +57,15 @@ class IngestMessageService
         $productName = $parsed['product_name'] ?? $productKey;
 
         // Look up existing product
-        $product = Product::where('group_id', $groupId)
-            ->where('product_key', $productKey)
-            ->first();
+        if ($photoHash) {
+            $product = Product::where('group_id', $groupId)
+                ->where('photo_hash', $photoHash)
+                ->first();
+        } else {
+            $product = Product::where('group_id', $groupId)
+                ->where('product_key', $productKey)
+                ->first();
+        }
 
         if (!$product) {
             // ── NEW PRODUCT ──────────────────────────────────────────────────
@@ -58,6 +75,7 @@ class IngestMessageService
                 'product_name'      => $productName,
                 'latest_price'      => $price,
                 'latest_photo_url'  => $photoUrl,
+                'photo_hash'        => $photoHash,
                 'latest_message_id' => $messageId,
                 'first_seen_at'     => $postedAt,
                 'last_updated_at'   => $postedAt,
@@ -111,7 +129,10 @@ class IngestMessageService
         }
 
         // Only photo changed — update silently, no history entry
-        $product->update(['latest_photo_url' => $photoUrl]);
+        $product->update([
+            'latest_photo_url' => $photoUrl,
+            'photo_hash' => $photoHash,
+        ]);
         return ['action' => 'skipped', 'product' => $product];
     }
 
