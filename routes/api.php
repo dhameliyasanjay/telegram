@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 // ── Groups ──────────────────────────────────────────────────────────────────
 Route::get('/groups',          [GroupController::class, 'index']);
 Route::post('/groups',         [GroupController::class, 'store']);
+Route::post('/groups/sync-all', [GroupController::class, 'syncAll']);
 Route::post('/groups/{id}/sync', [GroupController::class, 'sync']);
 
 // ── Board ───────────────────────────────────────────────────────────────────

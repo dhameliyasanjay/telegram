@@ -68,12 +68,18 @@ class MessageParserService
         $patterns = [
             // ₹1,500  $1500.00  €1.500
             '/[\$₹€£¥₪₺₩฿]\s*([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/u',
+            // Rs 1500 / Rs. 1500 / INR 1500
+            '/\b(?:rs\.?|rupees?|inr|dhs?\.?|dirhams?)\s*([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/i',
+            // 1500 ₹ / 1500 $
+            '/([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)\s*[\$₹€£¥₪₺₩฿]/u',
+            // 1500/- or 1500 /- (Indian Rupee shorthand)
+            '/([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)\s*\/\-/u',
             // 1500 USD / 1,500.00 AED / 1500 INR
             '/([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)\s*(?:USD|INR|AED|SAR|EUR|GBP|PKR|BDT|LKR|NPR|QAR|KWD|BHD|OMR|EGP)\b/i',
             // 1500 rupees / 1500 dollars / 1500 rs
             '/([\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)\s*(?:rupees?|dollars?|rs\.?|dhs?\.?|dirhams?)\b/i',
-            // Price: 1500 / Rate: 1500 / Cost: 1500
-            '/(?:price|rate|cost|mrp|sp|selling|amount|charge|fee|total)[\s:=]+([₹$€£¥]?\s*[\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/i',
+            // Price: 1500 / Rate: 1500 / Cost: 1500 (Removed generic words like 'total' or 'amount' to avoid qty mismatches)
+            '/(?:price|rate|cost|mrp|sp|selling\s*price)[\s:=]+([₹$€£¥]?\s*[\d]{1,3}(?:[,\.][\d]{3})*(?:[,\.][\d]{1,2})?|\d+)/i',
         ];
 
         foreach ($patterns as $pattern) {

@@ -46,8 +46,14 @@ class GroupController extends Controller
             // Fetch group metadata
             $info = $this->telegramClient->getGroupInfo($client, $link);
 
+            Log::info('Group info resolved', $info);
+
             if (empty($info['telegram_id'])) {
-                return response()->json(['error' => 'Could not resolve group info. Check the invite link.'], 422);
+                Log::error('Could not resolve telegram_id from group info', ['link' => $link, 'info' => $info]);
+                return response()->json([
+                    'error' => 'Could not resolve group info. Make sure: (1) you are logged in via php artisan telegram:login, (2) the link is valid (try the public username like https://t.me/supplyzonee), (3) your account can access this group.',
+                    'debug' => $info,
+                ], 422);
             }
 
             // Upsert the group record
@@ -62,24 +68,13 @@ class GroupController extends Controller
                 ]
             );
 
-            // Initial sync — fetch last 100 messages
-            $messages = $this->telegramClient->getMessages($client, (int)$info['telegram_id'], 100);
-            $stats    = ['new' => 0, 'updated' => 0, 'skipped' => 0];
-
-            foreach (array_reverse($messages) as $msg) {
-                $parsed = $this->parser->parse($msg);
-                if (!$parsed) continue;
-
-                $result = $this->ingestor->ingest($group->id, $parsed, $client);
-                $stats[$result['action']] = ($stats[$result['action']] ?? 0) + 1;
-            }
-
-            $group->update(['last_synced_at' => now()]);
+            // Dispatch background job to sync recent 100 messages (prevents 504 timeouts on large channels)
+            \App\Jobs\SyncTelegramGroup::dispatch($group, 100);
 
             return response()->json([
-                'group' => $group->fresh()->loadCount('products'),
-                'sync'  => $stats,
-                'message' => "Group added and synced: {$stats['new']} new products, {$stats['updated']} updated.",
+                'group'   => $group->fresh()->loadCount('products'),
+                'sync'    => ['new' => 0, 'updated' => 0, 'skipped' => 0],
+                'message' => "Group added! Syncing recent products in the background... they will appear shortly.",
             ], 201);
 
         } catch (\Throwable $e) {
@@ -89,35 +84,54 @@ class GroupController extends Controller
     }
 
     /**
+     * POST /api/groups/sync-all
+     * Manually dispatch background job to re-fetch and ingest recent messages for all groups.
+     */
+    public function syncAll(Request $request): JsonResponse
+    {
+        $limit = (int) $request->input('limit', 100);
+        $full  = filter_var($request->input('full', true), FILTER_VALIDATE_BOOLEAN);
+        $groups = TelegramGroup::all();
+        $dispatched = 0;
+
+        try {
+            foreach ($groups as $group) {
+                \App\Jobs\SyncTelegramGroup::dispatch($group, $full ? 200 : $limit, $full);
+                $dispatched++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $full 
+                    ? "Full historical sync started in the background for $dispatched groups! This will crawl the entire history for all of them."
+                    : "Sync started in background for $dispatched groups ($limit messages each). Watch the board for live updates!",
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Sync-all failed: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * POST /api/groups/{id}/sync
-     * Manually re-fetch and ingest recent messages.
+     * Manually dispatch background job to re-fetch and ingest recent messages.
      */
     public function sync(Request $request, int $id): JsonResponse
     {
         $group = TelegramGroup::findOrFail($id);
         $limit = (int) $request->input('limit', 100);
+        $full  = (bool) $request->input('full', false);
 
         try {
-            $client = $this->telegramClient->getClient();
-            $client->start();
-
-            $messages = $this->telegramClient->getMessages($client, (int)$group->telegram_id, $limit);
-            $stats    = ['new' => 0, 'updated' => 0, 'skipped' => 0];
-
-            foreach (array_reverse($messages) as $msg) {
-                $parsed = $this->parser->parse($msg);
-                if (!$parsed) continue;
-
-                $result = $this->ingestor->ingest($group->id, $parsed, $client);
-                $stats[$result['action']] = ($stats[$result['action']] ?? 0) + 1;
-            }
-
-            $group->update(['last_synced_at' => now()]);
+            // If full=1, we fetch up to 200 per job, and the job will recursively dispatch itself
+            \App\Jobs\SyncTelegramGroup::dispatch($group, $full ? 200 : $limit, $full);
 
             return response()->json([
                 'group'   => $group->fresh()->loadCount('products'),
-                'sync'    => $stats,
-                'message' => "Sync complete: {$stats['new']} new, {$stats['updated']} updated, {$stats['skipped']} skipped.",
+                'sync'    => ['new' => 0, 'updated' => 0, 'skipped' => 0],
+                'message' => $full 
+                    ? "Full historical sync started in the background. This will crawl the entire channel history!"
+                    : "Sync started in background for {$limit} messages. Watch the board for live updates!",
             ]);
 
         } catch (\Throwable $e) {
