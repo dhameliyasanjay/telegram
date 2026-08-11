@@ -76,17 +76,23 @@ body {
 .filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; outline: none; transition: border-color 0.2s; }
 .filter-select:focus { border-color: var(--accent); }
 
-/* Groups Strip */
-.groups-strip { padding: 0 32px 24px; display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; }
-.groups-strip::-webkit-scrollbar { display: none; }
-.group-chip {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 8px 18px; 
-  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; transition: all 0.2s; color: var(--text-muted);
+/* Group Dropdown */
+.group-dropdown-wrap { padding: 0 32px 24px; display: flex; align-items: center; gap: 12px; }
+.group-select {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 40px 10px 16px; color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a1a1aa' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  min-width: 220px;
 }
-.group-chip:hover { background: var(--surface-hover); color: var(--text); }
-.group-chip.active { background: rgba(59,130,246,0.1); border-color: var(--accent); color: var(--accent); box-shadow: 0 0 20px rgba(59,130,246,0.1); }
-.group-count { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; font-size: 11px; color: var(--text-muted); }
-.group-chip.active .group-count { background: var(--accent); color: #fff; }
+.group-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.group-sync-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; font-size: 13px; font-family: 'Outfit', sans-serif; }
+.group-sync-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border-focus); }
+/* Infinite scroll sentinel */
+.scroll-sentinel { height: 60px; display: flex; align-items: center; justify-content: center; margin: 0 32px 48px; }
+.scroll-loader { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 14px; }
 
 /* Grid */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; padding: 0 32px 48px; }
@@ -185,8 +191,8 @@ body {
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Pagination */
-.pagination { padding: 0 32px 48px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+/* Pagination hidden - using infinite scroll */
+.pagination { display: none; }
 </style>
 </head>
 <body>
@@ -233,8 +239,16 @@ body {
   </div>
 </div>
 
-<!-- Groups -->
-<div class="groups-strip" id="groupsStrip"></div>
+<!-- Group Dropdown -->
+<div class="group-dropdown-wrap">
+  <select class="group-select" id="groupSelect" onchange="onGroupChange(this.value)">
+    <option value="">All Groups</option>
+  </select>
+  <button class="group-sync-btn" id="groupSyncBtn" onclick="syncSelectedGroup()" title="Sync selected group">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+    Sync Group
+  </button>
+</div>
 
 <!-- Toolbar -->
 <div class="toolbar">
@@ -268,8 +282,13 @@ body {
   </div>
 </div>
 
-<!-- Pagination -->
-<div class="pagination" id="pagination"></div>
+<!-- Infinite Scroll Sentinel -->
+<div class="scroll-sentinel" id="scrollSentinel">
+  <div class="scroll-loader" id="scrollLoader" style="display:none">
+    <span class="spinner"></span>
+    <span>Loading more products...</span>
+  </div>
+</div>
 
 <!-- Add Group Modal -->
 <div class="modal-bg" id="addModal" onclick="e=>e.target===this&&closeAddModal()">
@@ -305,17 +324,22 @@ body {
 
 <script>
 const API = '/api';
-let currentPage = 1;
 let currentGroup = null;
 let currentPhotoHash = null;
 let searchTimer = null;
 let allGroups = [];
+// Infinite scroll state
+let infinitePage = 1;
+let infiniteLastPage = 1;
+let infiniteLoading = false;
+let infiniteObserver = null;
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
   loadGroups();
-  loadBoard();
+  resetBoard();
+  setupInfiniteScroll();
   connectSse();
   document.getElementById('addModal').addEventListener('click', function(e){
     if(e.target === this) closeAddModal();
@@ -354,15 +378,13 @@ function connectSse() {
 function handleLiveUpdate(data) {
   const { action, product } = data;
   toast(action === 'new' ? `✦ Discovered: ${product.product_name.substring(0,35)}...` : `↑ Price updated: ${product.product_name.substring(0,35)}...`, action === 'new' ? 'success' : '');
-  
-  // Flash effect if product is on current page
   const card = document.getElementById(`prod-${product.id}`);
   if(card) {
       card.classList.remove('flash');
-      void card.offsetWidth; // trigger reflow
+      void card.offsetWidth;
       card.classList.add('flash');
   } else {
-      loadBoard(currentPage);
+      resetBoard();
   }
   loadStats();
 }
@@ -379,61 +401,50 @@ async function loadStats() {
   } catch(e) {}
 }
 
-// ── Groups ────────────────────────────────────────────────────────────────
+// ── Groups Dropdown ───────────────────────────────────────────────────────
 async function loadGroups() {
   try {
     const r = await fetch(`${API}/groups`);
     const d = await r.json();
     allGroups = d.groups ?? [];
-    renderGroupChips();
+    renderGroupDropdown();
   } catch(e) {}
 }
 
-function renderGroupChips() {
-  const strip = document.getElementById('groupsStrip');
-  strip.innerHTML = '';
-  if (!allGroups.length) return;
-
-  const all = document.createElement('span');
-  all.className = 'group-chip' + (!currentGroup ? ' active' : '');
-  all.textContent = 'All Groups';
-  all.onclick = () => { currentGroup = null; document.querySelectorAll('.group-chip').forEach(c=>c.classList.remove('active')); all.classList.add('active'); loadBoard(1); };
-  strip.appendChild(all);
-
+function renderGroupDropdown() {
+  const sel = document.getElementById('groupSelect');
+  // Keep first 'All Groups' option
+  while (sel.options.length > 1) sel.remove(1);
   allGroups.forEach(g => {
-    const chip = document.createElement('span');
-    chip.className = 'group-chip' + (currentGroup === g.id ? ' active' : '');
-    chip.innerHTML = `${escHtml(g.title)} <span class="group-count">${g.products_count||0}</span>`;
-
-    const syncBtn = document.createElement('button');
-    syncBtn.className = 'btn btn-ghost btn-sm';
-    syncBtn.style.cssText = 'padding:2px 6px; border:none; margin-left:4px; color:inherit;';
-    syncBtn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
-    syncBtn.title = 'Sync this group';
-    syncBtn.onclick = e => { e.stopPropagation(); syncGroup(g.id, e, syncBtn); };
-    chip.appendChild(syncBtn);
-
-    chip.addEventListener('click', () => {
-      currentGroup = g.id;
-      document.querySelectorAll('.group-chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      loadBoard(1);
-    });
-    strip.appendChild(chip);
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = `${g.title} (${g.products_count || 0})`;
+    sel.appendChild(opt);
   });
+  // Restore selection
+  sel.value = currentGroup ?? '';
 }
 
-async function syncGroup(id, e, btn) {
-  if (e) e.stopPropagation();
+function onGroupChange(val) {
+  currentGroup = val ? parseInt(val) : null;
+  currentPhotoHash = null;
+  document.getElementById('activePhotoFilter').style.display = 'none';
+  resetBoard();
+}
+
+async function syncSelectedGroup() {
+  const id = currentGroup;
+  const btn = document.getElementById('groupSyncBtn');
   const orig = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span>';
+  const url = id ? `${API}/groups/${id}/sync` : `${API}/groups/sync-all`;
+  if (!id && !confirm('Sync ALL groups history?')) return;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Syncing...';
   btn.disabled = true;
   try {
-    const options = { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' } };
-    const r = await fetch(`${API}/groups/${id}/sync`, options);
+    const r = await fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' } });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Sync failed');
-    toast(`Sync dispatched for group! Watch for live updates.`, 'success');
+    toast('Sync dispatched! Watch for live updates.', 'success');
   } catch(e) {
     toast(e.message, 'error');
   } finally {
@@ -444,13 +455,12 @@ async function syncGroup(id, e, btn) {
 
 async function syncAllGroups(e) {
   const btn = document.getElementById('syncAllBtn');
-  if (!confirm(`Initialize full historical sync for ALL groups?\n\nThis will crawl the entire history of all connected channels to ensure absolutely no products are missed. This process runs in the background.`)) return;
+  if (!confirm(`Initialize full historical sync for ALL groups?\n\nThis will crawl the entire history of all connected channels. This process runs in the background.`)) return;
   const orig = btn.innerHTML;
   btn.innerHTML = '<span class="spinner"></span> Syncing...';
   btn.disabled = true;
   try {
-    const options = { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' } };
-    const r = await fetch(`${API}/groups/sync-all`, options);
+    const r = await fetch(`${API}/groups/sync-all`, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' } });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Sync-all failed');
     toast(d.message || 'Full Sync-all dispatched!', 'success');
@@ -462,38 +472,71 @@ async function syncAllGroups(e) {
   }
 }
 
-// ── Board ─────────────────────────────────────────────────────────────────
-async function loadBoard(page = 1) {
-  currentPage = page;
+// ── Board & Infinite Scroll ───────────────────────────────────────────────
+function resetBoard() {
+  infinitePage = 1;
+  infiniteLastPage = 1;
+  infiniteLoading = false;
+  document.getElementById('grid').innerHTML = '';
+  if (infiniteObserver) { infiniteObserver.disconnect(); infiniteObserver = null; }
+  loadMoreProducts();
+  setupInfiniteScroll();
+}
+
+async function loadMoreProducts() {
+  if (infiniteLoading || infinitePage > infiniteLastPage) return;
+  infiniteLoading = true;
+  document.getElementById('scrollLoader').style.display = 'flex';
+
   const search = document.getElementById('searchInput').value.trim();
-  let url = `${API}/board?per_page=24&page=${page}`;
+  let url = `${API}/board?per_page=24&page=${infinitePage}`;
   if (currentPhotoHash) {
-      url += `&photo_hash=${currentPhotoHash}`;
+    url += `&photo_hash=${currentPhotoHash}`;
   } else {
-      if (currentGroup) url += `&group_id=${currentGroup}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (currentGroup) url += `&group_id=${currentGroup}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
   }
+
+  const sortVal = document.getElementById('sortSelect')?.value;
+  if (sortVal) url += `&sort=${sortVal}`;
 
   try {
     const r = await fetch(url);
     const d = await r.json();
-    renderGrid(d.products ?? []);
-    renderPagination(d.current_page, d.last_page);
+    const products = d.products ?? [];
+    infiniteLastPage = d.last_page ?? 1;
+
+    const grid = document.getElementById('grid');
+    if (infinitePage === 1 && !products.length) {
+      grid.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg><h3>No products found</h3><p>Try syncing your groups or adjusting the search.</p></div>`;
+    } else {
+      products.forEach(p => {
+        grid.insertAdjacentHTML('beforeend', cardHtml(p));
+      });
+    }
+    infinitePage++;
   } catch(e) {
-    document.getElementById('grid').innerHTML = `<div class="empty"><h3>Connection Error</h3><p>${e.message}</p></div>`;
+    if (infinitePage === 1) {
+      document.getElementById('grid').innerHTML = `<div class="empty"><h3>Connection Error</h3><p>${e.message}</p></div>`;
+    }
+  } finally {
+    infiniteLoading = false;
+    document.getElementById('scrollLoader').style.display = 'none';
   }
 }
 
-function renderGrid(products) {
-  const grid = document.getElementById('grid');
-  if (!products.length) {
-    grid.innerHTML = `<div class="empty">
-      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      <h3>No products found</h3><p>Try syncing your groups or adjusting the search.</p></div>`;
-    return;
-  }
-  grid.innerHTML = products.map(p => cardHtml(p)).join('');
+function setupInfiniteScroll() {
+  const sentinel = document.getElementById('scrollSentinel');
+  infiniteObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && infinitePage <= infiniteLastPage && !infiniteLoading) {
+      loadMoreProducts();
+    }
+  }, { rootMargin: '200px' });
+  infiniteObserver.observe(sentinel);
 }
+
+// Legacy alias used elsewhere
+function loadBoard(page) { resetBoard(); }
 
 function cardHtml(p) {
   const hasPrice = p.latest_price != null;
@@ -526,40 +569,6 @@ function cardHtml(p) {
       </div>
     </div>
   </div>`;
-}
-
-function renderPagination(cur, last) {
-  const wrap = document.getElementById('pagination');
-  if (last <= 1) { wrap.innerHTML=''; return; }
-  
-  let html = '';
-  const addBtn = (page, text, active, disabled) => {
-    if (disabled) {
-      html += `<button class="btn btn-ghost btn-sm" disabled style="opacity:0.5;cursor:default">${text}</button>`;
-    } else {
-      html += `<button class="btn ${active?'btn-primary':'btn-ghost'} btn-sm" onclick="loadBoard(${page})">${text}</button>`;
-    }
-  };
-
-  addBtn(cur - 1, 'Prev', false, cur === 1);
-  const delta = window.innerWidth < 600 ? 1 : 2;
-  const range = [];
-  for (let i = 1; i <= last; i++) {
-    if (i === 1 || i === last || (i >= cur - delta && i <= cur + delta)) {
-      range.push(i);
-    }
-  }
-  let l;
-  for (let i of range) {
-    if (l) {
-      if (i - l === 2) addBtn(l + 1, l + 1, false, false);
-      else if (i - l !== 1) addBtn(0, '...', false, true);
-    }
-    addBtn(i, i, i === cur, false);
-    l = i;
-  }
-  addBtn(cur + 1, 'Next', false, cur === last);
-  wrap.innerHTML = html;
 }
 
 // ── History Panel ─────────────────────────────────────────────────────────
@@ -675,9 +684,8 @@ async function handlePhotoFilter(e) {
         if (!r.ok) throw new Error(d.message || 'Failed to hash image.');
         
         currentPhotoHash = d.photo_hash;
-        
         document.getElementById('activePhotoFilter').style.display = 'flex';
-        loadBoard(1);
+        resetBoard();
     } catch (err) {
         toast(err.message || 'Failed to compute image hash.', 'error');
     }
@@ -687,7 +695,7 @@ async function handlePhotoFilter(e) {
 function clearPhotoFilter() {
     currentPhotoHash = null;
     document.getElementById('activePhotoFilter').style.display = 'none';
-    loadBoard(1);
+    resetBoard();
 }
 
 function toast(msg, type='') {

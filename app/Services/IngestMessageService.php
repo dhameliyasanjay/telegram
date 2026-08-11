@@ -69,32 +69,55 @@ class IngestMessageService
 
         if (!$product) {
             // ── NEW PRODUCT ──────────────────────────────────────────────────
-            $product = Product::create([
-                'group_id'          => $groupId,
-                'product_key'       => $productKey,
-                'product_name'      => $productName,
-                'latest_price'      => $price,
-                'latest_photo_url'  => $photoUrl,
-                'photo_hash'        => $photoHash,
-                'latest_message_id' => $messageId,
-                'first_seen_at'     => $postedAt,
-                'last_updated_at'   => $postedAt,
-            ]);
+            // Use firstOrCreate to safely handle any race conditions or duplicate
+            // key collisions from a previous sync run without crashing the job.
+            try {
+                $product = Product::firstOrCreate(
+                    ['group_id' => $groupId, 'product_key' => $productKey],
+                    [
+                        'product_name'      => $productName,
+                        'latest_price'      => $price,
+                        'latest_photo_url'  => $photoUrl,
+                        'photo_hash'        => $photoHash,
+                        'latest_message_id' => $messageId,
+                        'first_seen_at'     => $postedAt,
+                        'last_updated_at'   => $postedAt,
+                    ]
+                );
 
-            PriceHistory::create([
-                'product_id'  => $product->id,
-                'price'       => $price,
-                'photo_url'   => $photoUrl,
-                'message_id'  => $messageId,
-                'message_text'=> $messageText,
-                'posted_at'   => $postedAt,
-                'recorded_at' => now()->toDateTimeString(),
-            ]);
+                if (!$product->wasRecentlyCreated) {
+                    // Already existed under a different lookup path — treat as existing
+                    goto existing_product;
+                }
 
-            Log::info("New product [{$product->id}]: {$productName}");
-            $this->broadcastSseEvent('new', $product->load('group'));
-            return ['action' => 'new', 'product' => $product];
+                PriceHistory::create([
+                    'product_id'   => $product->id,
+                    'price'        => $price,
+                    'photo_url'    => $photoUrl,
+                    'message_id'   => $messageId,
+                    'message_text' => $messageText,
+                    'posted_at'    => $postedAt,
+                    'recorded_at'  => now()->toDateTimeString(),
+                ]);
+
+                Log::info("New product [{$product->id}]: {$productName}");
+                $this->broadcastSseEvent('new', $product->load('group'));
+                return ['action' => 'new', 'product' => $product];
+
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                // A concurrent process already inserted this product — just fetch it
+                $product = Product::where('group_id', $groupId)
+                    ->where('product_key', $productKey)
+                    ->first();
+
+                if (!$product) {
+                    Log::warning("Duplicate insert for [{$productKey}] but could not re-fetch product. Skipping.");
+                    return ['action' => 'skipped', 'product' => null];
+                }
+            }
         }
+
+        existing_product:
 
         // ── EXISTING PRODUCT ────────────────────────────────────────────────
         $priceChanged = $this->priceChanged($product->latest_price, $price);
