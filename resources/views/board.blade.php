@@ -117,6 +117,20 @@ body {
 .card-price span.curr { font-size: 14px; color: var(--text-muted); font-weight: 500; }
 .card-time { font-size: 12px; color: var(--text-muted); font-family: 'Inter', sans-serif; }
 .price-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: rgba(255,255,255,0.1); }
+
+/* Download button on card image */
+.card-download-btn {
+  position: absolute; top: 10px; right: 10px; z-index: 10;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  color: #fff; padding: 6px 10px; font-size: 12px; font-weight: 600;
+  font-family: 'Outfit', sans-serif; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  opacity: 0; transition: opacity 0.2s, background 0.2s;
+  pointer-events: none;
+}
+.card:hover .card-download-btn { opacity: 1; pointer-events: all; }
+.card-download-btn:hover { background: rgba(59,130,246,0.75); border-color: rgba(59,130,246,0.5); }
 .price-updated-recent { color: var(--green); background: rgba(16,185,129,0.15); box-shadow: 0 0 10px rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); }
 
 @keyframes flash-green { 0% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); border-color: var(--green); } 100% { box-shadow: none; border-color: var(--border); } }
@@ -193,6 +207,79 @@ body {
 
 /* Pagination hidden - using infinite scroll */
 .pagination { display: none; }
+
+/* ── Catalogue Modal ───────────────────────────────────────────────── */
+.cat-modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.cat-modal-bg.open { opacity: 1; pointer-events: all; }
+.cat-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+  padding: 36px 40px 32px; width: 100%; max-width: 600px; max-height: 92vh;
+  overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+  transform: translateY(24px); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+.cat-modal-bg.open .cat-modal { transform: translateY(0); }
+.cat-modal-title {
+  font-size: 22px; font-weight: 700; margin-bottom: 28px; letter-spacing: -0.4px;
+  display: flex; align-items: center; gap: 10px;
+}
+.cat-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.cat-form-grid .full { grid-column: 1 / -1; }
+.cat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; display: block; }
+.cat-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; color: var(--text); font-size: 14px; font-family: 'Outfit', sans-serif;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.cat-photo-zone {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  cursor: pointer; transition: border-color 0.2s; position: relative;
+}
+.cat-photo-zone:hover { border-color: var(--accent); }
+.cat-photo-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; display: none; }
+.cat-photo-placeholder { color: var(--text-muted); font-size: 13px; text-align: center; }
+.cat-modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; border-top: 1px solid var(--border); padding-top: 24px; }
+.cat-close-btn {
+  position: absolute; top: 20px; right: 20px; background: var(--bg); border: 1px solid var(--border);
+  width: 34px; height: 34px; border-radius: 50%; color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.cat-close-btn:hover { background: var(--surface-hover); }
+
+/* Multi-select group dropdown */
+.multi-select-wrap { position:relative; }
+.multi-select-trigger {
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:10px;
+  padding:12px 14px; color:var(--text); font-size:14px; font-family:'Outfit',sans-serif;
+  cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  transition:border-color 0.2s,box-shadow 0.2s; user-select:none;
+}
+.multi-select-trigger.open { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+.multi-select-trigger svg { transition:transform 0.2s; flex-shrink:0; }
+.multi-select-trigger.open svg { transform:rotate(180deg); }
+.multi-select-dropdown {
+  position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:600;
+  background:var(--surface); border:1px solid var(--border-focus); border-radius:12px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.5); max-height:220px; overflow-y:auto;
+  display:none; padding:6px;
+}
+.multi-select-dropdown.open { display:block; }
+.multi-select-option {
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px;
+  cursor:pointer; font-size:13px; transition:background 0.15s;
+}
+.multi-select-option:hover { background:var(--surface-hover); }
+.multi-select-option input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+.multi-select-tag-count { background:rgba(59,130,246,0.2); color:var(--accent); border-radius:5px; padding:1px 7px; font-size:12px; font-weight:700; }
+.multi-select-search-wrap { padding:6px; position:sticky; top:0; background:var(--surface); z-index:2; border-bottom:1px solid var(--border); margin:-6px -6px 6px -6px; border-radius:12px 12px 0 0; }
+.multi-select-search { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-size:13px; font-family:'Outfit',sans-serif; outline:none; transition:border-color 0.2s; }
+.multi-select-search:focus { border-color:var(--accent); }
 </style>
 </head>
 <body>
@@ -211,6 +298,14 @@ body {
     <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         Sync All History
+    </button>
+    <a href="/catalogue" class="btn btn-ghost" style="text-decoration:none">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
+        Catalogue
+    </a>
+    <button class="btn btn-ghost" onclick="openCatModal()" id="addCatBtn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add Product
     </button>
     <button class="btn btn-primary" onclick="openAddModal()">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -321,6 +416,103 @@ body {
 
 <!-- Toasts -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ── Catalogue Add/Edit Modal ───────────────────────────────────────── -->
+<div class="cat-modal-bg" id="catModalBg" onclick="if(event.target===this)closeCatModal()">
+  <div class="cat-modal" onclick="event.stopPropagation()">
+    <button class="cat-close-btn" onclick="closeCatModal()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cat-modal-title">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span id="catModalHeading">Add Product</span>
+    </div>
+
+    <form id="catForm" onsubmit="submitCatForm(event)" enctype="multipart/form-data">
+      <input type="hidden" id="catProductId" value="">
+
+      <div class="cat-form-grid">
+        <!-- Photo Upload -->
+        <div class="full">
+          <label class="cat-label">Product Photo</label>
+          <div class="cat-photo-zone" onclick="document.getElementById('catPhotoInput').click()">
+            <img id="catPhotoPreview" class="cat-photo-preview" alt="Preview">
+            <div class="cat-photo-placeholder" id="catPhotoPlaceholder">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 8px;display:block;color:var(--text-muted)"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Click to upload a photo
+            </div>
+            <input type="file" id="catPhotoInput" accept="image/*" style="display:none" onchange="handleCatPhotoPreview(event)">
+          </div>
+        </div>
+
+        <!-- Product Name -->
+        <div class="full">
+          <label class="cat-label" for="catProductName">Product Name</label>
+          <input class="cat-input" type="text" id="catProductName" placeholder="e.g. Star Master Lamp" oninput="autoGenSku()">
+        </div>
+
+        <!-- SKU ID -->
+        <div>
+          <label class="cat-label" for="catSkuId">SKU ID</label>
+          <input class="cat-input" type="text" id="catSkuId" placeholder="Auto-generated (JK-…)">
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="cat-label" for="catStatus">Status</label>
+          <select class="cat-input" id="catStatus">
+            <option value="pending">Pending</option>
+            <option value="on-hold">On-Hold</option>
+            <option value="active">Active</option>
+          </select>
+        </div>
+
+        <!-- Market Price -->
+        <div>
+          <label class="cat-label" for="catMarketPrice">Market Price (₹)</label>
+          <input class="cat-input" type="number" step="0.01" id="catMarketPrice" placeholder="0.00">
+        </div>
+
+        <!-- Bank Settlement -->
+        <div>
+          <label class="cat-label" for="catBankSettlement">Bank Settlement (₹)</label>
+          <input class="cat-input" type="number" step="0.01" id="catBankSettlement" placeholder="0.00">
+        </div>
+
+        <!-- Qty -->
+        <div>
+          <label class="cat-label" for="catQty">Quantity</label>
+          <input class="cat-input" type="number" id="catQty" placeholder="0">
+        </div>
+
+        <!-- Group Name -->
+        <div class="full">
+          <label class="cat-label">Group Name</label>
+          <div class="multi-select-wrap" id="catGroupWrap">
+            <div class="multi-select-trigger" id="catGroupTrigger" onclick="toggleGroupDropdown()">
+              <span id="catGroupLabel" style="color:var(--text-muted)">— Select Groups —</span>
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="multi-select-dropdown" id="catGroupDropdown">
+              <div class="multi-select-search-wrap" onclick="event.stopPropagation()">
+                <input type="text" class="multi-select-search" id="catGroupSearch" placeholder="Search groups..." oninput="filterGroupOptions()">
+              </div>
+              <div id="catGroupOptions"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cat-modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeCatModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="catSubmitBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          Save Product
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script>
 const API = '/api';
@@ -551,9 +743,13 @@ function cardHtml(p) {
   const priceClass = isRecentUpdate ? 'price-tag price-updated-recent' : 'price-tag';
   const priceBadge = isRecentUpdate ? `<span class="${priceClass}">UPDATED</span>` : '';
 
+  const dlBtn = p.latest_photo_url
+    ? `<a class="card-download-btn" href="${escHtml(p.latest_photo_url)}" download onclick="event.stopPropagation()" title="Download image"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v13M8 12l4 4 4-4M3 19h18" stroke-linecap="round" stroke-linejoin="round"/></svg>Download</a>`
+    : '';
+
   return `
   <div class="card" id="prod-${p.id}" onclick="showHistory(${p.id},'${escHtml(p.product_name.replace(/'/g,"\\\'"))}','${escHtml(p.group?.title||'')}')">
-    <div class="card-img-wrap">${img}</div>
+    <div class="card-img-wrap">${img}${dlBtn}</div>
     <div class="card-body">
       <div class="card-group-tag">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
@@ -705,6 +901,188 @@ function toast(msg, type='') {
   el.textContent = msg;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 4000);
+}
+
+// ── Catalogue Modal ──────────────────────────────────────────────────────────
+let catSkuTimer = null;
+
+async function openCatModal(product = null) {
+  const bg = document.getElementById('catModalBg');
+  document.getElementById('catModalHeading').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('catProductId').value = product ? product.id : '';
+  document.getElementById('catProductName').value = product ? product.product_name : '';
+  document.getElementById('catSkuId').value = product ? product.sku_id : '';
+  document.getElementById('catMarketPrice').value = product ? (product.market_price ?? '') : '';
+  document.getElementById('catBankSettlement').value = product ? (product.bank_settlement ?? '') : '';
+  document.getElementById('catQty').value = product ? (product.qty ?? '') : '';
+  await loadGroupsDropdown();
+  // Restore selected groups
+  const selected = product && Array.isArray(product.group_name) ? product.group_name : [];
+  restoreGroupSelections(selected);
+  updateGroupLabel();
+  document.getElementById('catStatus').value = product ? product.status : 'pending';
+  // Photo preview
+  const preview = document.getElementById('catPhotoPreview');
+  const placeholder = document.getElementById('catPhotoPlaceholder');
+  if (product && product.photo_url) {
+    preview.src = product.photo_url;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    preview.src = '';
+  }
+  document.getElementById('catPhotoInput').value = '';
+  bg.classList.add('open');
+}
+
+function closeCatModal() {
+  document.getElementById('catModalBg').classList.remove('open');
+}
+
+function handleCatPhotoPreview(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const preview = document.getElementById('catPhotoPreview');
+  const placeholder = document.getElementById('catPhotoPlaceholder');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+}
+
+let _allGroupTitles = [];
+
+async function loadGroupsDropdown() {
+  try {
+    const r = await fetch('/api/groups');
+    const d = await r.json();
+    _allGroupTitles = (d.groups ?? []).map(g => g.title);
+    const container = document.getElementById('catGroupOptions');
+    container.innerHTML = _allGroupTitles.map(title => `
+      <label class="multi-select-option">
+        <input type="checkbox" value="${escHtml(title)}" onchange="updateGroupLabel()">
+        <span>${escHtml(title)}</span>
+      </label>
+    `).join('');
+    document.getElementById('catGroupSearch').value = '';
+    filterGroupOptions();
+  } catch(e) {}
+}
+
+function filterGroupOptions() {
+  const query = document.getElementById('catGroupSearch').value.toLowerCase();
+  const options = document.querySelectorAll('#catGroupOptions .multi-select-option');
+  options.forEach(opt => {
+    const text = opt.querySelector('span').textContent.toLowerCase();
+    opt.style.display = text.includes(query) ? 'flex' : 'none';
+  });
+}
+
+function toggleGroupDropdown() {
+  const trigger = document.getElementById('catGroupTrigger');
+  const dropdown = document.getElementById('catGroupDropdown');
+  const isOpen = dropdown.classList.contains('open');
+  if (isOpen) {
+    dropdown.classList.remove('open');
+    trigger.classList.remove('open');
+  } else {
+    dropdown.classList.add('open');
+    trigger.classList.add('open');
+  }
+}
+
+function getSelectedGroups() {
+  return Array.from(document.querySelectorAll('#catGroupDropdown input[type=checkbox]:checked'))
+    .map(cb => cb.value);
+}
+
+function restoreGroupSelections(selected) {
+  document.querySelectorAll('#catGroupDropdown input[type=checkbox]').forEach(cb => {
+    cb.checked = selected.includes(cb.value);
+  });
+}
+
+function updateGroupLabel() {
+  const selected = getSelectedGroups();
+  const label = document.getElementById('catGroupLabel');
+  if (!selected.length) {
+    label.textContent = '— Select Groups —';
+    label.style.color = 'var(--text-muted)';
+  } else if (selected.length === 1) {
+    label.textContent = selected[0];
+    label.style.color = 'var(--text)';
+  } else {
+    label.innerHTML = `${escHtml(selected[0])} <span class="multi-select-tag-count">+${selected.length - 1} more</span>`;
+    label.style.color = 'var(--text)';
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('catGroupWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('catGroupDropdown')?.classList.remove('open');
+    document.getElementById('catGroupTrigger')?.classList.remove('open');
+  }
+});
+
+async function autoGenSku() {
+  const name = document.getElementById('catProductName').value.trim();
+  const skuInput = document.getElementById('catSkuId');
+  // Only auto-gen if SKU is empty or was previously auto-generated (starts with JK-)
+  const currentSku = skuInput.value;
+  if (currentSku && !currentSku.startsWith('JK-')) return;
+  clearTimeout(catSkuTimer);
+  catSkuTimer = setTimeout(async () => {
+    if (!name) { skuInput.value = ''; return; }
+    try {
+      const r = await fetch(`/api/catalogue/sku-preview?name=${encodeURIComponent(name)}`);
+      const d = await r.json();
+      skuInput.value = d.sku || '';
+    } catch(e) {}
+  }, 400);
+}
+
+async function submitCatForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('catSubmitBtn');
+  const productId = document.getElementById('catProductId').value;
+  const isEdit = !!productId;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+  btn.disabled = true;
+
+  const fd = new FormData();
+  fd.append('product_name',    document.getElementById('catProductName').value);
+  fd.append('sku_id',          document.getElementById('catSkuId').value);
+  fd.append('market_price',    document.getElementById('catMarketPrice').value);
+  fd.append('bank_settlement', document.getElementById('catBankSettlement').value);
+  fd.append('qty',             document.getElementById('catQty').value);
+  fd.append('group_name', JSON.stringify(getSelectedGroups()));
+  fd.append('status',          document.getElementById('catStatus').value);
+  const photoFile = document.getElementById('catPhotoInput').files[0];
+  if (photoFile) fd.append('photo', photoFile);
+
+  const url    = isEdit ? `/api/catalogue/${productId}` : '/api/catalogue';
+  const method = 'POST';
+
+  try {
+    const r = await fetch(url, {
+      method,
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      body: fd,
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to save product.');
+    toast(isEdit ? 'Product updated!' : 'Product added to catalogue!', 'success');
+    closeCatModal();
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.innerHTML = origHtml;
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
