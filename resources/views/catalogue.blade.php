@@ -64,6 +64,26 @@ td { padding:14px 16px; font-size:14px; vertical-align:middle; }
 .toast.error { border-left-color:var(--red); }
 @keyframes slideIn { from { transform:translateX(120%); opacity:0; } to { transform:none; opacity:1; } }
 .pagination-bar { display:flex; align-items:center; gap:12px; padding:0 32px 32px; }
+/* Inline editable price cell */
+.editable-price {
+  cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+  border-bottom:1px dashed rgba(255,255,255,0.2); padding-bottom:1px;
+  transition:border-color 0.2s, color 0.2s;
+}
+.editable-price:hover { border-bottom-color:var(--accent); color:var(--accent); }
+.editable-price .edit-icon { opacity:0; transition:opacity 0.2s; color:var(--text-muted); }
+.editable-price:hover .edit-icon { opacity:1; }
+.inline-price-input {
+  background:var(--bg); border:1px solid var(--accent);
+  border-radius:6px; padding:4px 8px; color:var(--text);
+  font-size:14px; font-family:'Outfit',sans-serif;
+  width:90px; outline:none;
+  box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+}
+/* Profit badge */
+.profit-positive { color:#10b981; background:rgba(16,185,129,0.12); padding:3px 9px; border-radius:6px; font-size:13px; font-weight:600; border:1px solid rgba(16,185,129,0.25); display:inline-block; }
+.profit-negative { color:#ef4444; background:rgba(239,68,68,0.12); padding:3px 9px; border-radius:6px; font-size:13px; font-weight:600; border:1px solid rgba(239,68,68,0.25); display:inline-block; }
+.profit-zero { color:var(--text-muted); background:rgba(255,255,255,0.05); padding:3px 9px; border-radius:6px; font-size:13px; font-weight:600; border:1px solid var(--border); display:inline-block; }
 /* Lightbox */
 .lightbox-bg {
   position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:900;
@@ -189,6 +209,7 @@ td { padding:14px 16px; font-size:14px; vertical-align:middle; }
         <th>SKU ID</th>
         <th>Market Price</th>
         <th>Bank Settlement</th>
+        <th>Profit</th>
         <th>Qty</th>
         <th>Group</th>
         <th>Status</th>
@@ -326,30 +347,53 @@ async function loadCatalogue() {
     renderTable(d.data ?? []);
     renderPagination();
   } catch(e) {
-    document.getElementById('catBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red)">Failed to load data.</td></tr>`;
+    document.getElementById('catBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--red)">Failed to load data.</td></tr>`;
   }
+}
+
+function profitBadge(market, settlement) {
+  if (market == null || settlement == null) return '<span style="color:var(--text-muted)">—</span>';
+  const diff = Number(settlement) - Number(market);
+  const formatted = (diff >= 0 ? '+' : '') + '₹' + Math.abs(diff).toLocaleString('en-IN');
+  const cls = diff > 0 ? 'profit-positive' : diff < 0 ? 'profit-negative' : 'profit-zero';
+  return `<span class="${cls}">${diff >= 0 ? '+' : '-'}₹${Math.abs(diff).toLocaleString('en-IN')}</span>`;
+}
+
+function editIcon() {
+  return `<svg class="edit-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 }
 
 function renderTable(items) {
   const tbody = document.getElementById('catBody');
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><h3>No products found</h3><p>Add your first product using the button above.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><h3>No products found</h3><p>Add your first product using the button above.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(p => {
     const photo = p.photo_url
       ? `<img class="thumb" src="${esc(p.photo_url)}" alt="" onclick="openLightbox('${esc(p.photo_url)}')" onerror="this.outerHTML='<div class=\\'no-img\\'>No Img</div>'">`
       : `<div class="no-img">No Img</div>`;
-    const price  = p.market_price    != null ? `₹${Number(p.market_price).toLocaleString('en-IN')}` : '—';
-    const settle = p.bank_settlement != null ? `₹${Number(p.bank_settlement).toLocaleString('en-IN')}` : '—';
+    const priceVal  = p.market_price    != null ? Number(p.market_price) : null;
+    const settleVal = p.bank_settlement != null ? Number(p.bank_settlement) : null;
+    const priceDisp  = priceVal  != null ? `₹${priceVal.toLocaleString('en-IN')}` : '—';
+    const settleDisp = settleVal != null ? `₹${settleVal.toLocaleString('en-IN')}` : '—';
     const qty    = p.qty != null ? p.qty : '—';
     const statusClass = { pending: 'status-pending', 'on-hold': 'status-on-hold', active: 'status-active' }[p.status] ?? '';
-    return `<tr>
+    return `<tr id="row-${p.id}" data-market="${p.market_price ?? ''}" data-settlement="${p.bank_settlement ?? ''}">
       <td>${photo}</td>
       <td style="max-width:220px;font-weight:500">${esc(p.product_name)}</td>
       <td><span class="sku-tag">${esc(p.sku_id)}</span></td>
-      <td>${price}</td>
-      <td>${settle}</td>
+      <td id="mp-cell-${p.id}">
+        <span class="editable-price" onclick="startInlineEdit(${p.id},'market_price',this)" title="Click to edit">
+          ${priceDisp}${editIcon()}
+        </span>
+      </td>
+      <td id="bs-cell-${p.id}">
+        <span class="editable-price" onclick="startInlineEdit(${p.id},'bank_settlement',this)" title="Click to edit">
+          ${settleDisp}${editIcon()}
+        </span>
+      </td>
+      <td id="profit-cell-${p.id}">${profitBadge(p.market_price, p.bank_settlement)}</td>
       <td>${qty}</td>
       <td style="color:var(--text-muted)">${esc(p.group_name ?? '—')}</td>
       <td><span class="status-badge ${statusClass}">${esc(p.status)}</span></td>
@@ -365,6 +409,76 @@ function renderTable(items) {
       </td>
     </tr>`;
   }).join('');
+}
+
+// ── Inline price editing ─────────────────────────────────────────────────
+function startInlineEdit(productId, field, spanEl) {
+  // Don't open a second input if already editing
+  if (spanEl.parentElement.querySelector('.inline-price-input')) return;
+  const row = document.getElementById(`row-${productId}`);
+  const currentRaw = field === 'market_price'
+    ? row.dataset.market
+    : row.dataset.settlement;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.step = '0.01';
+  input.className = 'inline-price-input';
+  input.value = currentRaw !== '' ? currentRaw : '';
+  input.placeholder = '0.00';
+  // Hide the span, show input
+  spanEl.style.display = 'none';
+  spanEl.parentElement.appendChild(input);
+  input.focus();
+  input.select();
+
+  const commit = async () => {
+    const newVal = input.value.trim();
+    input.remove();
+    spanEl.style.display = '';
+    const parsed = newVal !== '' ? parseFloat(newVal) : null;
+    // Check if value actually changed
+    const oldVal = currentRaw !== '' ? parseFloat(currentRaw) : null;
+    if (parsed === oldVal) return; // no change
+    await saveInlinePrice(productId, field, parsed, spanEl);
+  };
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.remove(); spanEl.style.display = ''; }
+  });
+}
+
+async function saveInlinePrice(productId, field, value, spanEl) {
+  try {
+    const fd = new FormData();
+    fd.append(field, value !== null ? value : '');
+    // We need to send _method override because the route is POST with id
+    const r = await fetch(`${API}/catalogue/${productId}`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      body: fd
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Save failed.');
+    // Update row data attributes
+    const row = document.getElementById(`row-${productId}`);
+    if (field === 'market_price') {
+      row.dataset.market = value !== null ? value : '';
+    } else {
+      row.dataset.settlement = value !== null ? value : '';
+    }
+    // Re-render the span
+    const disp = value != null ? `₹${Number(value).toLocaleString('en-IN')}` : '—';
+    spanEl.innerHTML = `${disp}<svg class="edit-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    // Refresh profit cell
+    const market     = field === 'market_price'     ? value : (row.dataset.market !== '' ? parseFloat(row.dataset.market) : null);
+    const settlement = field === 'bank_settlement'  ? value : (row.dataset.settlement !== '' ? parseFloat(row.dataset.settlement) : null);
+    document.getElementById(`profit-cell-${productId}`).innerHTML = profitBadge(market, settlement);
+    toast('Price updated!', 'success');
+  } catch(err) {
+    toast(err.message, 'error');
+  }
 }
 
 function renderPagination() {
