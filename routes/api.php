@@ -6,6 +6,8 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\SseController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\TransactionController;
+
 // ── Groups ──────────────────────────────────────────────────────────────────
 Route::get('/groups',          [GroupController::class, 'index']);
 Route::post('/groups',         [GroupController::class, 'store']);
@@ -25,3 +27,21 @@ Route::post('/catalogue',            [CatalogueController::class, 'store']);
 Route::get('/catalogue/{id}',        [CatalogueController::class, 'show']);
 Route::post('/catalogue/{id}',       [CatalogueController::class, 'update']);
 Route::delete('/catalogue/{id}',     [CatalogueController::class, 'destroy']);
+
+// ── Transactions (Payment, Order, Return) ──────────────────────────────────
+Route::get('/payments',              [TransactionController::class, 'getPayments']);
+Route::post('/payments',             [TransactionController::class, 'storePayment']);
+Route::post('/payments/{id}',        [TransactionController::class, 'updatePayment']);
+Route::delete('/payments/{id}',      [TransactionController::class, 'destroyPayment']);
+
+Route::get('/orders',                [TransactionController::class, 'getOrders']);
+Route::post('/orders',               [TransactionController::class, 'storeOrder']);
+Route::post('/orders/{id}',          [TransactionController::class, 'updateOrder']);
+Route::delete('/orders/{id}',        [TransactionController::class, 'destroyOrder']);
+
+Route::get('/return-orders',         [TransactionController::class, 'getReturnOrders']);
+Route::post('/return-orders',        [TransactionController::class, 'storeReturnOrder']);
+Route::post('/return-orders/{id}',   [TransactionController::class, 'updateReturnOrder']);
+Route::delete('/return-orders/{id}', [TransactionController::class, 'destroyReturnOrder']);
+
+

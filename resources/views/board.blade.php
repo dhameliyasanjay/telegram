@@ -27,6 +27,54 @@ body {
   background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif;
   min-height: 100vh; overflow-x: hidden;
 }
+/* Layout Shell */
+.app-layout { display: flex; min-height: 100vh; width: 100%; }
+.sidebar {
+  width: 270px; background: rgba(18, 18, 22, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 150;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.main-wrapper {
+  flex: 1; margin-left: 270px; min-height: 100vh; display: flex; flex-direction: column;
+  width: calc(100% - 270px); transition: margin-left 0.3s;
+}
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); box-shadow: 20px 0 50px rgba(0,0,0,0.6); }
+  .sidebar.open { transform: translateX(0); }
+  .main-wrapper { margin-left: 0; width: 100%; }
+}
+.sidebar-header { padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.sidebar-close-btn { display: none; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 8px; padding: 4px; }
+.sidebar-close-btn:hover { background: var(--surface-hover); color: var(--text); }
+@media (max-width: 1024px) { .sidebar-close-btn { display: flex; align-items: center; justify-content: center; } }
+
+.sidebar-content { flex: 1; padding: 24px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+.nav-section { display: flex; flex-direction: column; gap: 6px; }
+.nav-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); padding: 0 12px 6px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px;
+  color: var(--text-muted); font-size: 14px; font-weight: 500; font-family: 'Outfit', sans-serif;
+  text-decoration: none; background: transparent; border: 1px solid transparent; cursor: pointer;
+  width: 100%; text-align: left; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-item svg { flex-shrink: 0; transition: transform 0.2s, color 0.2s; }
+.nav-item:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border); }
+.nav-item:hover svg { transform: scale(1.1); color: var(--accent); }
+.nav-item.active { background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: rgba(59, 130, 246, 0.25); font-weight: 600; }
+.nav-item.active svg { color: #3b82f6; }
+
+.nav-item.btn-nav-action.primary-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); border: none; font-weight: 600; margin-top: 4px;
+}
+.nav-item.btn-nav-action.primary-gradient:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); color: #ffffff; }
+
+.sidebar-footer { padding: 20px; border-top: 1px solid var(--border); background: rgba(18, 18, 22, 0.5); }
+.sidebar-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 140; }
+.sidebar-overlay.open { opacity: 1; pointer-events: all; }
+
 /* Header */
 .header {
   position: sticky; top: 0; z-index: 100;
@@ -34,6 +82,12 @@ body {
   border-bottom: 1px solid var(--border); padding: 0 32px; height: 76px;
   display: flex; align-items: center; justify-content: space-between;
 }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.sidebar-toggle { display: none; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: all 0.2s; }
+.sidebar-toggle:hover { background: var(--surface-hover); border-color: var(--border-focus); }
+@media (max-width: 1024px) { .sidebar-toggle { display: flex; align-items: center; justify-content: center; } }
+.page-title h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
+.page-subtitle { font-size: 12px; color: var(--text-muted); display: block; font-family: 'Inter', sans-serif; }
 .logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
 .logo svg { width: 32px; height: 32px; }
 .header-actions { display: flex; align-items: center; gap: 16px; }
@@ -252,6 +306,16 @@ body {
 }
 .cat-close-btn:hover { background: var(--surface-hover); }
 
+/* Modal Datatable */
+.modal-table-wrap { margin-top:24px; border-top:1px solid var(--border); padding-top:20px; }
+.modal-table-title { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.modal-table { width:100%; border-collapse:collapse; font-size:13px; text-align:left; }
+.modal-table th { padding:8px 10px; color:var(--text-muted); font-weight:600; font-size:11px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+.modal-table td { padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--text); }
+.modal-table tr:last-child td { border-bottom:none; }
+.btn-del-sm { background:transparent; border:none; color:var(--red); cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.2s; }
+.btn-del-sm:hover { background:rgba(239,68,68,0.15); }
+
 /* Multi-select group dropdown */
 .multi-select-wrap { position:relative; }
 .multi-select-trigger {
@@ -284,106 +348,159 @@ body {
 </head>
 <body>
 
-<!-- Header -->
-<header class="header">
-  <div class="logo">
-    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#3b82f6"/><path d="M7 16l3.5 3.5 2.5-2.5 5 5 7-9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Price Monitor
-  </div>
-  <div class="header-actions">
-    <div class="live-indicator" id="liveIndicator">
+<div class="app-layout">
+  <!-- Sidebar Overlay for Mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- Vertical Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#3b82f6"/><path d="M7 16l3.5 3.5 2.5-2.5 5 5 7-9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Price Monitor</span>
+      </div>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close sidebar">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- Section: Navigation -->
+      <div class="nav-section">
+        <div class="nav-section-title">Navigation</div>
+        <a href="/" class="nav-item active">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/catalogue" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
+          <span>Catalogue</span>
+        </a>
+      </div>
+
+      <!-- Section: Transactions -->
+      <div class="nav-section">
+        <div class="nav-section-title">Transactions</div>
+        <a href="/payments" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          <span>Payment</span>
+        </a>
+        <a href="/orders" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          <span>Order</span>
+        </a>
+        <a href="/returns" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+          <span>Return</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="live-indicator" id="liveIndicator">
         <span class="live-dot" id="liveDot" style="background:var(--red); box-shadow:0 0 12px var(--red)"></span>
         <span id="liveText">Connecting...</span>
+      </div>
     </div>
-    <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        Sync All History
-    </button>
-    <a href="/catalogue" class="btn btn-ghost" style="text-decoration:none">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
-        Catalogue
-    </a>
-    <button class="btn btn-ghost" onclick="openCatModal()" id="addCatBtn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        Add Product
-    </button>
-    <button class="btn btn-primary" onclick="openAddModal()">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        Add Group
-    </button>
-  </div>
-</header>
+  </aside>
 
-<!-- Stats -->
-<div class="stats-bar" id="statsBar">
-  <div class="stat-card">
-      <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> Monitored Groups</div>
-      <div class="stat-value" id="statGroups">—</div>
-  </div>
-  <div class="stat-card">
-      <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Total Products</div>
-      <div class="stat-value" id="statProducts">—</div>
-  </div>
-  <div class="stat-card">
-      <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Updated Today</div>
-      <div class="stat-value" id="statToday">—</div>
-  </div>
-  <div class="stat-card">
-      <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Parsed Prices</div>
-      <div class="stat-value" id="statPriced">—</div>
-  </div>
-</div>
+  <!-- Main Viewport Area -->
+  <div class="main-wrapper">
+    <!-- Streamlined Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="page-title">
+          <h2>Dashboard</h2>
+          <span class="page-subtitle">Real-time Telegram Price & Inventory Monitor</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Sync All History
+        </button>
+        <button class="btn btn-primary" onclick="openAddModal()" style="background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Add Group
+        </button>
+      </div>
+    </header>
 
-<!-- Group Dropdown -->
-<div class="group-dropdown-wrap">
-  <select class="group-select" id="groupSelect" onchange="onGroupChange(this.value)">
-    <option value="">All Groups</option>
-  </select>
-  <button class="group-sync-btn" id="groupSyncBtn" onclick="syncSelectedGroup()" title="Sync selected group">
-    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-    Sync Group
-  </button>
-</div>
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-card">
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> Monitored Groups</div>
+          <div class="stat-value" id="statGroups">—</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Total Products</div>
+          <div class="stat-value" id="statProducts">—</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Updated Today</div>
+          <div class="stat-value" id="statToday">—</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Parsed Prices</div>
+          <div class="stat-value" id="statPriced">—</div>
+      </div>
+    </div>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <div class="search-wrap">
-    <span class="search-icon">
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
-    </span>
-    <input type="text" id="searchInput" placeholder="Search products across all groups…" oninput="debounceSearch()">
-  </div>
-  <input type="file" id="photoFilterInput" style="display:none" accept="image/*" onchange="handlePhotoFilter(event)">
-  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photoFilterInput').click()" title="Filter by Photo">
-    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-  </button>
-  <div id="activePhotoFilter" style="display:none; align-items:center; gap:8px; background:rgba(59,130,246,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:500; border:1px solid rgba(59,130,246,0.3);">
-    <span>📷 Image Filter</span>
-    <button style="background:transparent;border:none;color:inherit;cursor:pointer;display:flex;align-items:center;" onclick="clearPhotoFilter()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-  </div>
-  <select class="filter-select" id="sortSelect" onchange="loadBoard()" style="margin-left:auto">
-    <option value="latest">Latest Updated First</option>
-    <option value="price_asc">Price: Low to High</option>
-    <option value="price_desc">Price: High to Low</option>
-  </select>
-  <button class="btn btn-ghost btn-sm" onclick="loadBoard()">Refresh</button>
-</div>
+    <!-- Group Dropdown -->
+    <div class="group-dropdown-wrap">
+      <select class="group-select" id="groupSelect" onchange="onGroupChange(this.value)">
+        <option value="">All Groups</option>
+      </select>
+      <button class="group-sync-btn" id="groupSyncBtn" onclick="syncSelectedGroup()" title="Sync selected group">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Sync Group
+      </button>
+    </div>
 
-<!-- Grid -->
-<div class="grid" id="grid">
-  <div class="empty">
-      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      <h3>Loading workspace...</h3>
-  </div>
-</div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" id="searchInput" placeholder="Search products across all groups…" oninput="debounceSearch()">
+      </div>
+      <input type="file" id="photoFilterInput" style="display:none" accept="image/*" onchange="handlePhotoFilter(event)">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photoFilterInput').click()" title="Filter by Photo">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+      <div id="activePhotoFilter" style="display:none; align-items:center; gap:8px; background:rgba(59,130,246,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:500; border:1px solid rgba(59,130,246,0.3);">
+        <span>📷 Image Filter</span>
+        <button style="background:transparent;border:none;color:inherit;cursor:pointer;display:flex;align-items:center;" onclick="clearPhotoFilter()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <select class="filter-select" id="sortSelect" onchange="loadBoard()" style="margin-left:auto">
+        <option value="latest">Latest Updated First</option>
+        <option value="price_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="loadBoard()">Refresh</button>
+    </div>
 
-<!-- Infinite Scroll Sentinel -->
-<div class="scroll-sentinel" id="scrollSentinel">
-  <div class="scroll-loader" id="scrollLoader" style="display:none">
-    <span class="spinner"></span>
-    <span>Loading more products...</span>
-  </div>
-</div>
+    <!-- Grid -->
+    <div class="grid" id="grid">
+      <div class="empty">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <h3>Loading workspace...</h3>
+      </div>
+    </div>
+
+    <!-- Infinite Scroll Sentinel -->
+    <div class="scroll-sentinel" id="scrollSentinel">
+      <div class="scroll-loader" id="scrollLoader" style="display:none">
+        <span class="spinner"></span>
+        <span>Loading more products...</span>
+      </div>
+    </div>
+  </div> <!-- /.main-wrapper -->
+</div> <!-- /.app-layout -->
 
 <!-- Add Group Modal -->
 <div class="modal-bg" id="addModal" onclick="e=>e.target===this&&closeAddModal()">
@@ -508,6 +625,106 @@ body {
         <button type="submit" class="btn btn-primary" id="catSubmitBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
           Save Product
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="cat-modal-bg" id="paymentModalBg" onclick="if(event.target===this)closePaymentModal()">
+  <div class="cat-modal" onclick="event.stopPropagation()">
+    <button class="cat-close-btn" onclick="closePaymentModal()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cat-modal-title">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Payment Entry
+    </div>
+    <form id="paymentForm" onsubmit="submitPaymentForm(event)">
+      <div class="cat-form-grid">
+        <div class="full">
+          <label class="cat-label" for="payName">Name</label>
+          <input class="cat-input" type="text" id="payName" required placeholder="Enter customer / payer name">
+        </div>
+        <div>
+          <label class="cat-label" for="payValue">Payment Value (₹)</label>
+          <input class="cat-input" type="number" step="0.01" id="payValue" required placeholder="0.00">
+        </div>
+        <div>
+          <label class="cat-label" for="payDate">Date</label>
+          <input class="cat-input" type="date" id="payDate" required>
+        </div>
+      </div>
+      <div class="cat-modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closePaymentModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="paySubmitBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          Save Payment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="cat-modal-bg" id="orderModalBg" onclick="if(event.target===this)closeOrderModal()">
+  <div class="cat-modal" onclick="event.stopPropagation()">
+    <button class="cat-close-btn" onclick="closeOrderModal()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cat-modal-title">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      Order Entry
+    </div>
+    <form id="orderForm" onsubmit="submitOrderForm(event)">
+      <div class="cat-form-grid">
+        <div>
+          <label class="cat-label" for="orderNumber">Number of Order</label>
+          <input class="cat-input" type="text" id="orderNumber" required placeholder="e.g. ORD-1001 or 5">
+        </div>
+        <div>
+          <label class="cat-label" for="orderDate">Date</label>
+          <input class="cat-input" type="date" id="orderDate" required>
+        </div>
+      </div>
+      <div class="cat-modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeOrderModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="orderSubmitBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          Save Order
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Return Modal -->
+<div class="cat-modal-bg" id="returnModalBg" onclick="if(event.target===this)closeReturnModal()">
+  <div class="cat-modal" onclick="event.stopPropagation()">
+    <button class="cat-close-btn" onclick="closeReturnModal()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="cat-modal-title">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      Return Order Entry
+    </div>
+    <form id="returnForm" onsubmit="submitReturnForm(event)">
+      <div class="cat-form-grid">
+        <div>
+          <label class="cat-label" for="returnOrderNumber">Return Order</label>
+          <input class="cat-input" type="text" id="returnOrderNumber" required placeholder="e.g. RET-1001 or 2">
+        </div>
+        <div>
+          <label class="cat-label" for="returnDate">Date</label>
+          <input class="cat-input" type="date" id="returnDate" required>
+        </div>
+      </div>
+      <div class="cat-modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeReturnModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="returnSubmitBtn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          Save Return Order
         </button>
       </div>
     </form>
@@ -1083,6 +1300,274 @@ async function submitCatForm(e) {
     btn.innerHTML = origHtml;
     btn.disabled = false;
   }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Payment, Order & Return Modal JS Handlers ─────────────────────────────
+function openPaymentModal() {
+  document.getElementById('payName').value = '';
+  document.getElementById('payValue').value = '';
+  document.getElementById('payDate').valueAsDate = new Date();
+  document.getElementById('paymentModalBg').classList.add('open');
+  loadPayments();
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModalBg').classList.remove('open');
+}
+
+async function loadPayments() {
+  const tbody = document.getElementById('payListBody');
+  const countTag = document.getElementById('payCountTag');
+  try {
+    const r = await fetch(`${API}/payments`);
+    const d = await r.json();
+    const items = d.data ?? [];
+    if (countTag) countTag.textContent = `${items.length} records`;
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px">No payment records found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = items.map(p => `
+      <tr>
+        <td style="font-weight:500">${esc(p.name)}</td>
+        <td style="color:var(--green)">₹${Number(p.payment_value).toLocaleString('en-IN')}</td>
+        <td style="color:var(--text-muted)">${formatDate(p.date)}</td>
+        <td style="text-align:right">
+          <button class="btn-del-sm" onclick="deletePayment(${p.id})" title="Delete">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:12px">Failed to load payments.</td></tr>`;
+  }
+}
+
+async function submitPaymentForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('paySubmitBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  btn.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append('name', document.getElementById('payName').value);
+    fd.append('payment_value', document.getElementById('payValue').value);
+    fd.append('date', document.getElementById('payDate').value);
+    const r = await fetch(`${API}/payments`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      body: fd
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to save payment.');
+    toast(d.message || 'Payment added successfully!', 'success');
+    document.getElementById('payName').value = '';
+    document.getElementById('payValue').value = '';
+    loadPayments();
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+async function deletePayment(id) {
+  if (!confirm('Are you sure you want to delete this payment record?')) return;
+  try {
+    const r = await fetch(`${API}/payments/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to delete.');
+    toast('Payment deleted!', 'success');
+    loadPayments();
+  } catch(err) {
+    toast(err.message, 'error');
+  }
+}
+
+function openOrderModal() {
+  document.getElementById('orderNumber').value = '';
+  document.getElementById('orderDate').valueAsDate = new Date();
+  document.getElementById('orderModalBg').classList.add('open');
+  loadOrders();
+}
+
+function closeOrderModal() {
+  document.getElementById('orderModalBg').classList.remove('open');
+}
+
+async function loadOrders() {
+  const tbody = document.getElementById('orderListBody');
+  const countTag = document.getElementById('orderCountTag');
+  try {
+    const r = await fetch(`${API}/orders`);
+    const d = await r.json();
+    const items = d.data ?? [];
+    if (countTag) countTag.textContent = `${items.length} records`;
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px">No order records found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = items.map(o => `
+      <tr>
+        <td style="font-weight:500">${esc(o.order_number)}</td>
+        <td style="color:var(--text-muted)">${formatDate(o.date)}</td>
+        <td style="text-align:right">
+          <button class="btn-del-sm" onclick="deleteOrder(${o.id})" title="Delete">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--red);padding:12px">Failed to load orders.</td></tr>`;
+  }
+}
+
+async function submitOrderForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('orderSubmitBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  btn.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append('order_number', document.getElementById('orderNumber').value);
+    fd.append('date', document.getElementById('orderDate').value);
+    const r = await fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      body: fd
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to save order.');
+    toast(d.message || 'Order added successfully!', 'success');
+    document.getElementById('orderNumber').value = '';
+    loadOrders();
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Are you sure you want to delete this order record?')) return;
+  try {
+    const r = await fetch(`${API}/orders/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to delete.');
+    toast('Order deleted!', 'success');
+    loadOrders();
+  } catch(err) {
+    toast(err.message, 'error');
+  }
+}
+
+function openReturnModal() {
+  document.getElementById('returnOrderNumber').value = '';
+  document.getElementById('returnDate').valueAsDate = new Date();
+  document.getElementById('returnModalBg').classList.add('open');
+  loadReturnOrders();
+}
+
+function closeReturnModal() {
+  document.getElementById('returnModalBg').classList.remove('open');
+}
+
+async function loadReturnOrders() {
+  const tbody = document.getElementById('returnListBody');
+  const countTag = document.getElementById('returnCountTag');
+  try {
+    const r = await fetch(`${API}/return-orders`);
+    const d = await r.json();
+    const items = d.data ?? [];
+    if (countTag) countTag.textContent = `${items.length} records`;
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px">No return order records found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = items.map(ro => `
+      <tr>
+        <td style="font-weight:500">${esc(ro.return_order_number)}</td>
+        <td style="color:var(--text-muted)">${formatDate(ro.date)}</td>
+        <td style="text-align:right">
+          <button class="btn-del-sm" onclick="deleteReturnOrder(${ro.id})" title="Delete">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--red);padding:12px">Failed to load return orders.</td></tr>`;
+  }
+}
+
+async function submitReturnForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('returnSubmitBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  btn.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append('return_order_number', document.getElementById('returnOrderNumber').value);
+    fd.append('date', document.getElementById('returnDate').value);
+    const r = await fetch(`${API}/return-orders`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      body: fd
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to save return order.');
+    toast(d.message || 'Return order added successfully!', 'success');
+    document.getElementById('returnOrderNumber').value = '';
+    loadReturnOrders();
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
+}
+
+async function deleteReturnOrder(id) {
+  if (!confirm('Are you sure you want to delete this return order record?')) return;
+  try {
+    const r = await fetch(`${API}/return-orders/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to delete.');
+    toast('Return order deleted!', 'success');
+    loadReturnOrders();
+  } catch(err) {
+    toast(err.message, 'error');
+  }
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  if (sb) sb.classList.toggle('open');
+  if (ov) ov.classList.toggle('open');
 }
 </script>
 </body>
