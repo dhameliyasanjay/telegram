@@ -291,7 +291,7 @@ td { padding:14px 16px; font-size:14px; vertical-align:middle; }
         </button>
         <div class="page-title">
           <h2>Product Catalogue</h2>
-          <span class="page-subtitle">Manage master inventory, SKUs, prices & status</span>
+          <span class="page-subtitle">JAY KASTABHANJAN ENTERPRISE</span>
         </div>
       </div>
       <div class="header-actions">

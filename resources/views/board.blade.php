@@ -414,7 +414,7 @@ body {
         </button>
         <div class="page-title">
           <h2>Dashboard</h2>
-          <span class="page-subtitle">Real-time Telegram Price & Inventory Monitor</span>
+          <span class="page-subtitle">JAY KASTABHANJAN ENTERPRISE</span>
         </div>
       </div>
       <div class="header-actions">
