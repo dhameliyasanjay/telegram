@@ -230,6 +230,129 @@ body {
 .timeline-date { font-size: 12px; color: var(--text-muted); font-family: 'Inter', sans-serif; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px;}
 .timeline-text { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; }
 
+/* ── Smart Comparison & Multi-Group UI ─────────────────────────────── */
+.price-range-filter { display: flex; align-items: center; gap: 6px; }
+.filter-num-input {
+  width: 86px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 11px 12px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13.5px;
+  outline: none; transition: all 0.2s;
+}
+.filter-num-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.filter-sep { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+
+.badge-multi-group {
+  position: absolute; top: 10px; left: 10px; z-index: 10;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+  backdrop-filter: blur(8px); color: #fff; font-size: 11px; font-weight: 700;
+  padding: 5px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-single-group {
+  position: absolute; top: 10px; left: 10px; z-index: 10;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); color: #d4d4d8;
+  font-size: 11px; font-weight: 500; padding: 4px 8px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.chip-pill { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-right: 6px; margin-bottom: 6px; }
+.chip-brand { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); }
+.chip-model { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); }
+.card-meta-chips { display: flex; flex-wrap: wrap; margin-bottom: 8px; }
+
+.card-best-group { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.card-best-group strong { color: #60a5fa; font-weight: 600; }
+.best-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+
+.badge-best-price {
+  font-size: 10px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 5px; padding: 2px 7px;
+  letter-spacing: 0.5px; margin-left: 6px;
+}
+.card-price-spread { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: 'Inter', sans-serif; }
+.spread-savings { color: #10b981; font-weight: 600; }
+
+.btn-compare-action {
+  background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif; display: inline-flex; align-items: center; gap: 4px;
+}
+.btn-compare-action:hover {
+  background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+}
+
+/* Compare Drawer */
+.drawer.drawer-wide { max-width: 620px; }
+.compare-hero-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 18px;
+}
+.compare-hero-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.compare-hero-card.hero-cheapest {
+  background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.25);
+}
+.compare-hero-card.hero-cheapest .hero-val { color: #10b981; }
+.compare-hero-card.hero-savings {
+  background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.25);
+}
+.compare-hero-card.hero-savings .hero-val { color: #60a5fa; }
+.hero-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 600; }
+.hero-val { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+.hero-sub { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.compare-body-intro { margin-bottom: 20px; }
+.compare-body-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.compare-rule-note { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+
+/* Compare Offers List */
+.compare-offers-list { display: flex; flex-direction: column; gap: 14px; }
+.compare-offer-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 18px; transition: border-color 0.2s, transform 0.2s;
+}
+.compare-offer-row:hover { border-color: var(--border-focus); transform: translateY(-1px); }
+.compare-offer-row.is-cheapest-row {
+  border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(145deg, rgba(16,185,129,0.05) 0%, var(--surface) 100%);
+}
+.offer-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.offer-group-meta { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.offer-group-title { font-size: 15px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offer-group-members { font-size: 11.5px; color: var(--text-muted); }
+.offer-price-block { text-align: right; flex-shrink: 0; }
+.offer-main-price { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.offer-main-price.price-cheapest { color: #10b981; }
+.pill-cheapest-tag {
+  display: inline-block; font-size: 10px; font-weight: 700; background: rgba(16,185,129,0.18);
+  color: #10b981; border: 1px solid rgba(16,185,129,0.35); padding: 2px 7px; border-radius: 6px;
+  letter-spacing: 0.5px; margin-top: 3px;
+}
+.pill-diff-tag {
+  display: inline-block; font-size: 11px; font-weight: 600; background: rgba(239, 68, 68, 0.12);
+  color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 2px 7px; border-radius: 6px;
+  margin-top: 3px;
+}
+.offer-row-bottom {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-muted);
+}
+.offer-actions { display: flex; align-items: center; gap: 8px; }
+.btn-tg-link {
+  background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-tg-link:hover { background: #3b82f6; color: #fff; }
+.btn-history-toggle {
+  background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+  padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-history-toggle:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border-focus); }
+.offer-history-box {
+  margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);
+}
+
 /* Modal */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .modal-bg.open { opacity: 1; pointer-events: all; }
@@ -394,6 +517,22 @@ body {
           <span>Return</span>
         </a>
       </div>
+
+      <!-- Section: Account -->
+      <div class="nav-section">
+        <div class="nav-section-title">Account</div>
+        <a href="{{ route('profile') }}" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Auth::user()->name ?? 'Settings' }}</span>
+        </a>
+        <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+          @csrf
+          <button type="submit" class="nav-item" style="color:var(--red); width:100%; border:none; background:none; text-align:left; cursor:pointer;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Sign Out</span>
+          </button>
+        </form>
+      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -436,12 +575,16 @@ body {
           <div class="stat-value" id="statGroups">—</div>
       </div>
       <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Total Products</div>
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Canonical Products</div>
           <div class="stat-value" id="statProducts">—</div>
       </div>
       <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Updated Today</div>
-          <div class="stat-value" id="statToday">—</div>
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> Multi-Group Matches</div>
+          <div class="stat-value" id="statMultiGroup" style="color:#60a5fa">—</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg> Total Group Offers</div>
+          <div class="stat-value" id="statOffers">—</div>
       </div>
       <div class="stat-card">
           <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Parsed Prices</div>
@@ -466,21 +609,34 @@ body {
         <span class="search-icon">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" id="searchInput" placeholder="Search products across all groups…" oninput="debounceSearch()">
+        <input type="text" id="searchInput" placeholder="Search product name, brand, model, SKU…" oninput="debounceSearch()">
       </div>
+
+      <div class="price-range-filter" title="Filter by Price Range">
+        <input type="number" id="minPriceInput" placeholder="Min ₹" min="0" oninput="debounceSearch()" class="filter-num-input">
+        <span class="filter-sep">–</span>
+        <input type="number" id="maxPriceInput" placeholder="Max ₹" min="0" oninput="debounceSearch()" class="filter-num-input">
+      </div>
+
       <input type="file" id="photoFilterInput" style="display:none" accept="image/*" onchange="handlePhotoFilter(event)">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('photoFilterInput').click()" title="Filter by Photo">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </button>
+
       <div id="activePhotoFilter" style="display:none; align-items:center; gap:8px; background:rgba(59,130,246,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:500; border:1px solid rgba(59,130,246,0.3);">
         <span>📷 Image Filter</span>
         <button style="background:transparent;border:none;color:inherit;cursor:pointer;display:flex;align-items:center;" onclick="clearPhotoFilter()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>
+
       <select class="filter-select" id="sortSelect" onchange="loadBoard()" style="margin-left:auto">
-        <option value="latest">Latest Updated First</option>
-        <option value="price_asc">Price: Low to High</option>
-        <option value="price_desc">Price: High to Low</option>
+        <option value="latest">Latest Observed</option>
+        <option value="cheapest">Price: Lowest First</option>
+        <option value="highest">Price: Highest First</option>
+        <option value="offers">Most Competing Groups</option>
+        <option value="relevance">Best Match (Relevance)</option>
       </select>
+
+      <button class="btn btn-ghost btn-sm" onclick="clearAllFilters()" title="Reset all filters">Reset</button>
       <button class="btn btn-ghost btn-sm" onclick="loadBoard()">Refresh</button>
     </div>
 
@@ -512,6 +668,49 @@ body {
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
       <button class="btn btn-primary" id="addBtn" onclick="addGroup()">Connect Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Smart Price Comparison Drawer (Rule A: 1 offer per group, Rule B: All groups shown) -->
+<div class="drawer-overlay" id="compareOverlay" onclick="closeCompareDrawer()"></div>
+<div class="drawer drawer-wide" id="compareDrawer">
+  <div class="drawer-header" style="position:relative;">
+    <button class="drawer-close" onclick="closeCompareDrawer()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="card-meta-chips" id="compareMetaChips"></div>
+    <h3 class="drawer-title" id="compareTitle" style="padding-right:44px; margin-bottom:6px;">Product Comparison</h3>
+
+    <!-- Hero Comparison Metrics -->
+    <div class="compare-hero-grid" id="compareHeroGrid">
+      <div class="compare-hero-card hero-cheapest">
+        <span class="hero-label">Cheapest Offer</span>
+        <span class="hero-val" id="heroCheapestPrice">₹—</span>
+        <span class="hero-sub" id="heroCheapestGroup">in —</span>
+      </div>
+      <div class="compare-hero-card">
+        <span class="hero-label">Highest Offer</span>
+        <span class="hero-val" id="heroHighestPrice">₹—</span>
+        <span class="hero-sub" id="heroOfferCount">— Groups</span>
+      </div>
+      <div class="compare-hero-card hero-savings">
+        <span class="hero-label">Max Difference</span>
+        <span class="hero-val" id="heroSpread">₹0</span>
+        <span class="hero-sub" id="heroSpreadPercent">Spread between groups</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-body">
+    <div class="compare-body-intro">
+      <div class="compare-body-title">Competing Group Offers</div>
+      <div class="compare-rule-note">
+        <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Rule A: 1 offer per group &bull; Rule B: All competing suppliers compared
+      </div>
+    </div>
+
+    <div class="compare-offers-list" id="compareOffersList">
+      <!-- Injected by JavaScript -->
     </div>
   </div>
 </div>
@@ -737,6 +936,7 @@ let currentGroup = null;
 let currentPhotoHash = null;
 let searchTimer = null;
 let allGroups = [];
+let loadedCanonicalProducts = new Map();
 // Infinite scroll state
 let infinitePage = 1;
 let infiniteLastPage = 1;
@@ -786,8 +986,10 @@ function connectSse() {
 
 function handleLiveUpdate(data) {
   const { action, product } = data;
-  toast(action === 'new' ? `✦ Discovered: ${product.product_name.substring(0,35)}...` : `↑ Price updated: ${product.product_name.substring(0,35)}...`, action === 'new' ? 'success' : '');
-  const card = document.getElementById(`prod-${product.id}`);
+  const name = product?.product_name || product?.name || 'Product';
+  toast(action === 'new' ? `✦ Discovered: ${name.substring(0,35)}...` : `↑ Price updated: ${name.substring(0,35)}...`, action === 'new' ? 'success' : '');
+  const canonicalId = product?.canonical_product_id || product?.id;
+  const card = document.getElementById(`cp-${canonicalId}`);
   if(card) {
       card.classList.remove('flash');
       void card.offsetWidth;
@@ -804,8 +1006,9 @@ async function loadStats() {
     const r = await fetch(`${API}/board/stats`);
     const d = await r.json();
     document.getElementById('statGroups').textContent = d.total_groups ?? 0;
-    document.getElementById('statProducts').textContent = d.total_products ?? 0;
-    document.getElementById('statToday').textContent = d.updated_today ?? 0;
+    document.getElementById('statProducts').textContent = d.total_canonical_products ?? d.total_products ?? 0;
+    document.getElementById('statMultiGroup').textContent = d.multi_group_products ?? 0;
+    document.getElementById('statOffers').textContent = d.total_offers ?? 0;
     document.getElementById('statPriced').textContent = d.with_price ?? 0;
   } catch(e) {}
 }
@@ -886,10 +1089,26 @@ function resetBoard() {
   infinitePage = 1;
   infiniteLastPage = 1;
   infiniteLoading = false;
+  loadedCanonicalProducts.clear();
   document.getElementById('grid').innerHTML = '';
   if (infiniteObserver) { infiniteObserver.disconnect(); infiniteObserver = null; }
   loadMoreProducts();
   setupInfiniteScroll();
+}
+
+function clearAllFilters() {
+  document.getElementById('searchInput').value = '';
+  const minInput = document.getElementById('minPriceInput');
+  const maxInput = document.getElementById('maxPriceInput');
+  if (minInput) minInput.value = '';
+  if (maxInput) maxInput.value = '';
+  const gSelect = document.getElementById('groupSelect');
+  if (gSelect) gSelect.value = '';
+  currentGroup = null;
+  clearPhotoFilter();
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) sortSelect.value = 'latest';
+  resetBoard();
 }
 
 async function loadMoreProducts() {
@@ -898,12 +1117,17 @@ async function loadMoreProducts() {
   document.getElementById('scrollLoader').style.display = 'flex';
 
   const search = document.getElementById('searchInput').value.trim();
+  const minPrice = document.getElementById('minPriceInput')?.value.trim();
+  const maxPrice = document.getElementById('maxPriceInput')?.value.trim();
+
   let url = `${API}/board?per_page=24&page=${infinitePage}`;
   if (currentPhotoHash) {
     url += `&photo_hash=${currentPhotoHash}`;
   } else {
     if (currentGroup) url += `&group_id=${currentGroup}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (minPrice) url += `&min_price=${encodeURIComponent(minPrice)}`;
+    if (maxPrice) url += `&max_price=${encodeURIComponent(maxPrice)}`;
   }
 
   const sortVal = document.getElementById('sortSelect')?.value;
@@ -917,9 +1141,10 @@ async function loadMoreProducts() {
 
     const grid = document.getElementById('grid');
     if (infinitePage === 1 && !products.length) {
-      grid.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg><h3>No products found</h3><p>Try syncing your groups or adjusting the search.</p></div>`;
+      grid.innerHTML = `<div class="empty"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg><h3>No products found</h3><p>Try adjusting your search terms, price range, or group filter.</p></div>`;
     } else {
       products.forEach(p => {
+        loadedCanonicalProducts.set(p.id, p);
         grid.insertAdjacentHTML('beforeend', cardHtml(p));
       });
     }
@@ -948,43 +1173,248 @@ function setupInfiniteScroll() {
 function loadBoard(page) { resetBoard(); }
 
 function cardHtml(p) {
-  const hasPrice = p.latest_price != null;
-  const priceDisplay = hasPrice ? `₹${Number(p.latest_price).toLocaleString('en-IN')}` : `Unlisted`;
-  const img = p.latest_photo_url
-    ? `<img src="${escHtml(p.latest_photo_url)}" alt="" class="card-img" loading="lazy" onerror="this.parentElement.innerHTML='<span style=\\'color:var(--text-muted)\\'>Image Unavailable</span>'">`
-    : `<span style="color:var(--text-muted)">No image</span>`;
-  const time = p.last_updated_at ? timeAgo(p.last_updated_at) : '';
-  
-  // Highlight if recently updated (within 24 hours) vs first seen
-  const isRecentUpdate = p.last_updated_at && p.first_seen_at && p.last_updated_at !== p.first_seen_at && (new Date() - new Date(p.last_updated_at) < 86400000);
-  const priceClass = isRecentUpdate ? 'price-tag price-updated-recent' : 'price-tag';
-  const priceBadge = isRecentUpdate ? `<span class="${priceClass}">UPDATED</span>` : '';
+  const hasPrice = (p.cheapest_price != null && p.cheapest_price > 0);
+  const cheapestPriceFmt = hasPrice ? `₹${Number(p.cheapest_price).toLocaleString('en-IN')}` : `Unlisted`;
 
-  const dlBtn = p.latest_photo_url
-    ? `<a class="card-download-btn" href="${escHtml(p.latest_photo_url)}" download onclick="event.stopPropagation()" title="Download image"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v13M8 12l4 4 4-4M3 19h18" stroke-linecap="round" stroke-linejoin="round"/></svg>Download</a>`
+  const imgUrl = p.primary_photo_url || (p.offers && p.offers[0] ? p.offers[0].latest_photo_url : null);
+  const img = imgUrl
+    ? `<img src="${escHtml(imgUrl)}" alt="" class="card-img" loading="lazy" onerror="this.parentElement.innerHTML='<span style=\\'color:var(--text-muted)\\'>Image Unavailable</span>'">`
+    : `<span style="color:var(--text-muted)">No image</span>`;
+
+  const time = p.last_observed_at ? timeAgo(p.last_observed_at) : '';
+
+  // Multi-group vs Single-group badge
+  const groupBadge = p.offers_count > 1
+    ? `<span class="badge-multi-group"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> ${p.offers_count} Groups</span>`
+    : `<span class="badge-single-group">${escHtml(p.cheapest_group?.title || '1 Group')}</span>`;
+
+  // Download photo button
+  const dlBtn = imgUrl
+    ? `<a class="card-download-btn" href="${escHtml(imgUrl)}" download onclick="event.stopPropagation()" title="Download image"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v13M8 12l4 4 4-4M3 19h18" stroke-linecap="round" stroke-linejoin="round"/></svg>Download</a>`
     : '';
 
+  // Meta chips (Brand & Model)
+  let chips = '';
+  if (p.brand) chips += `<span class="chip-pill chip-brand">${escHtml(p.brand)}</span>`;
+  if (p.model) chips += `<span class="chip-pill chip-model">${escHtml(p.model)}</span>`;
+  const chipsHtml = chips ? `<div class="card-meta-chips">${chips}</div>` : '';
+
+  // Lowest in group indicator
+  const bestGroupHtml = (p.offers_count > 1 && p.cheapest_group?.title)
+    ? `<div class="card-best-group"><span class="best-dot"></span> Lowest in <strong>${escHtml(p.cheapest_group.title)}</strong></div>`
+    : `<div class="card-best-group"><span class="best-dot"></span> ${escHtml(p.cheapest_group?.title || 'Single Group')}</div>`;
+
+  // Price spread
+  let spreadHtml = '';
+  if (hasPrice && p.highest_price && p.highest_price > p.cheapest_price) {
+    const diff = Math.round((p.highest_price - p.cheapest_price) * 100) / 100;
+    spreadHtml = `<div class="card-price-spread">Spread: ₹${Number(p.cheapest_price).toLocaleString('en-IN')} – ₹${Number(p.highest_price).toLocaleString('en-IN')} <span class="spread-savings">(Save ₹${Number(diff).toLocaleString('en-IN')})</span></div>`;
+  }
+
   return `
-  <div class="card" id="prod-${p.id}" onclick="showHistory(${p.id},'${escHtml(p.product_name.replace(/'/g,"\\\'"))}','${escHtml(p.group?.title||'')}')">
-    <div class="card-img-wrap">${img}${dlBtn}</div>
+  <div class="card" id="cp-${p.id}" onclick="openCompareDrawer(${p.id})">
+    <div class="card-img-wrap">
+      ${img}
+      ${groupBadge}
+      ${dlBtn}
+    </div>
     <div class="card-body">
-      <div class="card-group-tag">
-          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-          ${escHtml(p.group?.title||'Unknown')}
+      ${chipsHtml}
+      <div class="card-name" title="${escHtml(p.product_name)}">${escHtml(p.product_name)}</div>
+      ${bestGroupHtml}
+      
+      <div>
+        <div class="card-price">
+          ${hasPrice ? '<span class="curr">₹</span>' : ''}${hasPrice ? Number(p.cheapest_price).toLocaleString('en-IN') : '<span style="font-size:16px;color:var(--text-muted);font-weight:500">Unlisted</span>'}
+          ${hasPrice ? '<span class="badge-best-price">BEST OFFER</span>' : ''}
+        </div>
+        ${spreadHtml}
       </div>
-      <div class="card-name">${escHtml(p.product_name)}</div>
-      <div class="card-footer">
-          <div>
-            <div class="card-price">${hasPrice ? '<span class="curr">₹</span>' : ''}${hasPrice ? Number(p.latest_price).toLocaleString('en-IN') : '<span style="font-size:16px;color:var(--text-muted);font-weight:500">Unlisted</span>'}</div>
-            ${priceBadge}
-          </div>
-          <div class="card-time">${time}</div>
+
+      <div class="card-footer" style="margin-top:14px;">
+        <div class="card-time">${time}</div>
+        <button class="btn-compare-action" onclick="event.stopPropagation(); openCompareDrawer(${p.id})">
+          Compare (${p.offers_count}) &rarr;
+        </button>
       </div>
     </div>
   </div>`;
 }
 
-// ── History Panel ─────────────────────────────────────────────────────────
+// ── Smart Compare Drawer ──────────────────────────────────────────────────
+async function openCompareDrawer(id) {
+  let p = loadedCanonicalProducts.get(id);
+  const overlay = document.getElementById('compareOverlay');
+  const drawer = document.getElementById('compareDrawer');
+
+  overlay.classList.add('open');
+  drawer.classList.add('open');
+
+  if (p) {
+    renderCompareDrawer(p);
+  } else {
+    document.getElementById('compareTitle').textContent = 'Loading comparison...';
+    document.getElementById('compareOffersList').innerHTML = '<div style="color:var(--text-muted);padding:24px;text-align:center;"><span class="spinner" style="width:16px;height:16px;"></span> Fetching competing offers...</div>';
+  }
+
+  // Always fetch fresh details in background or if not in cache
+  try {
+    const r = await fetch(`${API}/canonical-products/${id}`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.product) {
+        loadedCanonicalProducts.set(id, d.product);
+        renderCompareDrawer(d.product);
+      }
+    }
+  } catch(e) {}
+}
+
+function renderCompareDrawer(p) {
+  document.getElementById('compareTitle').textContent = p.product_name;
+
+  // Render chips
+  let chips = '';
+  if (p.brand) chips += `<span class="chip-pill chip-brand">${escHtml(p.brand)}</span>`;
+  if (p.model) chips += `<span class="chip-pill chip-model">${escHtml(p.model)}</span>`;
+  if (p.category) chips += `<span class="chip-pill" style="background:rgba(255,255,255,0.08);color:var(--text);">${escHtml(p.category)}</span>`;
+  document.getElementById('compareMetaChips').innerHTML = chips;
+
+  // Render Hero Metrics
+  const cheapest = p.cheapest_price != null ? `₹${Number(p.cheapest_price).toLocaleString('en-IN')}` : 'Unlisted';
+  const highest = p.highest_price != null ? `₹${Number(p.highest_price).toLocaleString('en-IN')}` : 'Unlisted';
+  const spread = (p.cheapest_price && p.highest_price && p.highest_price > p.cheapest_price)
+    ? Math.round((p.highest_price - p.cheapest_price) * 100) / 100
+    : 0;
+  const spreadPercent = (p.cheapest_price && spread > 0)
+    ? Math.round((spread / p.highest_price) * 100)
+    : 0;
+
+  document.getElementById('heroCheapestPrice').textContent = cheapest;
+  document.getElementById('heroCheapestGroup').textContent = p.cheapest_group?.title ? `in ${p.cheapest_group.title}` : '—';
+  document.getElementById('heroHighestPrice').textContent = highest;
+  document.getElementById('heroOfferCount').textContent = `${p.offers_count} Groups Monitored`;
+  document.getElementById('heroSpread').textContent = spread > 0 ? `₹${Number(spread).toLocaleString('en-IN')}` : '₹0';
+  document.getElementById('heroSpreadPercent').textContent = spreadPercent > 0 ? `Save up to ${spreadPercent}%` : 'Uniform price';
+
+  // Render Offers List (Rule A: 1 offer per group, Rule B: show all competing groups)
+  const offers = p.offers || [];
+  if (!offers.length) {
+    document.getElementById('compareOffersList').innerHTML = `<div style="color:var(--text-muted);padding:24px;text-align:center;">No offers found for this product.</div>`;
+    return;
+  }
+
+  const offersHtml = offers.map(o => {
+    const isCheapest = o.is_cheapest;
+    const hasPrice = (o.latest_price != null && o.latest_price > 0);
+    const priceText = hasPrice ? `₹${Number(o.latest_price).toLocaleString('en-IN')}` : 'Unlisted';
+
+    let priceTag = '';
+    if (isCheapest && hasPrice) {
+      priceTag = `<span class="pill-cheapest-tag">🏆 CHEAPEST OFFER</span>`;
+    } else if (o.price_diff != null && o.price_diff > 0) {
+      priceTag = `<span class="pill-diff-tag">+₹${Number(o.price_diff).toLocaleString('en-IN')}</span>`;
+    }
+
+    const tgBtn = o.group_link
+      ? `<a href="${escHtml(o.group_link)}" target="_blank" rel="noopener noreferrer" class="btn-tg-link">
+          <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          Open in Telegram &nearr;
+         </a>`
+      : '';
+
+    return `
+    <div class="compare-offer-row ${isCheapest ? 'is-cheapest-row' : ''}">
+      <div class="offer-row-top">
+        <div class="offer-group-meta">
+          <div class="offer-group-title">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            <span>${escHtml(o.group_title)}</span>
+          </div>
+          <div class="offer-group-members">
+            ${o.member_count ? `${Number(o.member_count).toLocaleString()} members &bull; ` : ''}Observed ${o.last_updated_at ? timeAgo(o.last_updated_at) : 'recently'}
+          </div>
+        </div>
+
+        <div class="offer-price-block">
+          <div class="offer-main-price ${isCheapest ? 'price-cheapest' : ''}">${priceText}</div>
+          ${priceTag}
+        </div>
+      </div>
+
+      <div class="offer-row-bottom">
+        <div>Rule A: Verified single current offer for this group</div>
+        <div class="offer-actions">
+          <button class="btn-history-toggle" onclick="toggleOfferHistory(${o.id}, this)">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Price History
+          </button>
+          ${tgBtn}
+        </div>
+      </div>
+
+      <div class="offer-history-box" id="offerHistory-${o.id}" style="display:none;"></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('compareOffersList').innerHTML = offersHtml;
+}
+
+function closeCompareDrawer() {
+  document.getElementById('compareDrawer').classList.remove('open');
+  document.getElementById('compareOverlay').classList.remove('open');
+}
+
+async function toggleOfferHistory(offerId, btnEl) {
+  const box = document.getElementById(`offerHistory-${offerId}`);
+  if (!box) return;
+
+  if (box.style.display !== 'none') {
+    box.style.display = 'none';
+    if (btnEl) btnEl.classList.remove('active');
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;"><span class="spinner" style="width:12px;height:12px;"></span> Loading price variations...</div>';
+  if (btnEl) btnEl.classList.add('active');
+
+  try {
+    const r = await fetch(`${API}/products/${offerId}/history`);
+    const d = await r.json();
+    const items = d.history ?? [];
+
+    if (!items.length) {
+      box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">No historical price changes recorded for this group.</div>';
+      return;
+    }
+
+    box.innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
+        Recorded Price History (${items.length} logs)
+      </div>
+      <div class="timeline" style="padding-left:20px;">
+        ${items.map((h, idx) => {
+          const priceFmt = h.price != null ? `₹${Number(h.price).toLocaleString('en-IN')}` : 'Unlisted';
+          return `
+            <div class="timeline-item" style="margin-bottom:16px;">
+              <div class="timeline-dot" style="left:-20px;width:10px;height:10px;top:4px;"></div>
+              <div class="timeline-content" style="padding:12px 14px;">
+                <div class="timeline-header" style="margin-bottom:6px;">
+                  <span style="font-weight:700;font-size:16px;color:#fff;">${priceFmt}</span>
+                  <span class="timeline-date">${h.posted_at ? timeAgo(h.posted_at) : ''}</span>
+                </div>
+                ${h.message_text ? `<div class="timeline-text" style="font-size:12px;">${escHtml(h.message_text.substring(0, 80))}...</div>` : ''}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  } catch(e) {
+    box.innerHTML = '<div style="color:var(--red);font-size:13px;padding:8px 0;">Failed to load price history.</div>';
+  }
+}
+
+// ── Legacy History Panel ──────────────────────────────────────────────────
 async function showHistory(id, name, group) {
   const drawer = document.getElementById('historyDrawer');
   const overlay = document.getElementById('historyOverlay');

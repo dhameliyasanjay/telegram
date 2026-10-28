@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PriceHistory;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -15,6 +16,7 @@ class IngestMessageService
 {
     public function __construct(
         private readonly TelegramClientService $telegramClient,
+        private readonly ProductIdentityService $identityService,
     ) {}
 
     /**
@@ -42,7 +44,8 @@ class IngestMessageService
                 $localPath = public_path(str_replace('/storage/', 'storage/', $photoUrl));
                 if (file_exists($localPath)) {
                     $cmd = 'python3 ' . base_path('phash.py') . ' ' . escapeshellarg($localPath);
-                    $output = trim(shell_exec($cmd));
+                    $rawOutput = shell_exec($cmd);
+                    $output = $rawOutput !== null ? trim((string) $rawOutput) : '';
                     if (strlen($output) === 16) {
                         $photoHash = $output;
                     }
@@ -54,52 +57,67 @@ class IngestMessageService
         $postedAt    = $parsed['posted_at'] ?? now()->toDateTimeString();
         $messageId   = $parsed['message_id'] ?? null;
         $messageText = $parsed['message_text'] ?? '';
-        $productName = $parsed['product_name'] ?? $productKey;
+        $cleanedTitle = $this->identityService->cleanText($parsed['product_name'] ?? $messageText ?? $productKey);
+        $productName  = !empty($cleanedTitle) ? $cleanedTitle : ($parsed['product_name'] ?? $productKey);
 
         // Look up existing product
-        if ($photoHash) {
-            $product = Product::where('group_id', $groupId)
-                ->where('photo_hash', $photoHash)
-                ->first();
-        } else {
-            $product = Product::where('group_id', $groupId)
-                ->where('product_key', $productKey)
-                ->first();
-        }
+        $product = Product::where('group_id', $groupId)
+            ->where(function ($query) use ($photoHash, $productKey) {
+                if ($photoHash) {
+                    $query->where('photo_hash', $photoHash);
+                }
+                $query->orWhere('product_key', $productKey);
+                
+                // Fuzzy match for text to catch slight variations like "in stock..."
+                if (mb_strlen($productKey) >= 10) {
+                    $query->orWhereRaw('? LIKE CONCAT(product_key, \'%\')', [$productKey]);
+                    $query->orWhere('product_key', 'like', $productKey . '%');
+                }
+            })
+            ->first();
 
         if (!$product) {
             // ── NEW PRODUCT ──────────────────────────────────────────────────
             // Use firstOrCreate to safely handle any race conditions or duplicate
             // key collisions from a previous sync run without crashing the job.
             try {
-                $product = Product::firstOrCreate(
-                    ['group_id' => $groupId, 'product_key' => $productKey],
-                    [
-                        'product_name'      => $productName,
-                        'latest_price'      => $price,
-                        'latest_photo_url'  => $photoUrl,
-                        'photo_hash'        => $photoHash,
-                        'latest_message_id' => $messageId,
-                        'first_seen_at'     => $postedAt,
-                        'last_updated_at'   => $postedAt,
-                    ]
-                );
+                $created = DB::transaction(function () use ($groupId, $productKey, $productName, $price, $photoUrl, $photoHash, $messageId, $postedAt, $messageText) {
+                    $prod = Product::firstOrCreate(
+                        ['group_id' => $groupId, 'product_key' => $productKey],
+                        [
+                            'product_name'      => $productName,
+                            'latest_price'      => $price,
+                            'latest_photo_url'  => $photoUrl,
+                            'photo_hash'        => $photoHash,
+                            'latest_message_id' => $messageId,
+                            'first_seen_at'     => $postedAt,
+                            'last_updated_at'   => $postedAt,
+                        ]
+                    );
 
-                if (!$product->wasRecentlyCreated) {
+                    if ($prod->wasRecentlyCreated && $price !== null && $price > 0) {
+                        PriceHistory::create([
+                            'product_id'   => $prod->id,
+                            'price'        => $price,
+                            'photo_url'    => $photoUrl,
+                            'message_id'   => $messageId,
+                            'message_text' => $messageText,
+                            'posted_at'    => $postedAt,
+                            'recorded_at'  => now()->toDateTimeString(),
+                        ]);
+                    }
+
+                    return $prod;
+                });
+
+                if (!$created->wasRecentlyCreated) {
                     // Already existed under a different lookup path — treat as existing
+                    $product = $created;
                     goto existing_product;
                 }
 
-                PriceHistory::create([
-                    'product_id'   => $product->id,
-                    'price'        => $price,
-                    'photo_url'    => $photoUrl,
-                    'message_id'   => $messageId,
-                    'message_text' => $messageText,
-                    'posted_at'    => $postedAt,
-                    'recorded_at'  => now()->toDateTimeString(),
-                ]);
-
+                $product = $created;
+                $this->identityService->resolveCanonicalProduct($product, $messageText);
                 Log::info("New product [{$product->id}]: {$productName}");
                 $this->broadcastSseEvent('new', $product->load('group'));
                 return ['action' => 'new', 'product' => $product];
@@ -122,40 +140,71 @@ class IngestMessageService
         // ── EXISTING PRODUCT ────────────────────────────────────────────────
         $priceChanged = $this->priceChanged($product->latest_price, $price);
         $photoChanged = $photoUrl && $photoUrl !== $product->latest_photo_url;
-
-        if (!$priceChanged && !$photoChanged) {
-            return ['action' => 'skipped', 'product' => $product];
-        }
+        $isNewerPost = $postedAt >= ($product->last_updated_at?->toDateTimeString() ?? '');
 
         if ($priceChanged) {
-            // Price changed → update + record history
-            $product->update([
-                'latest_price'      => $price,
-                'latest_photo_url'  => $photoUrl ?? $product->latest_photo_url,
-                'latest_message_id' => $messageId,
-                'last_updated_at'   => $postedAt,
-            ]);
+            // Valid price changed → update within transaction + record history
+            DB::transaction(function () use ($product, $price, $photoUrl, $photoHash, $messageId, $postedAt, $messageText) {
+                $updates = [
+                    'latest_price'      => $price,
+                    'latest_message_id' => $messageId,
+                    'last_updated_at'   => $postedAt,
+                ];
+                if ($photoUrl) {
+                    $updates['latest_photo_url'] = $photoUrl;
+                }
+                if ($photoHash) {
+                    $updates['photo_hash'] = $photoHash;
+                }
 
-            PriceHistory::create([
-                'product_id'  => $product->id,
-                'price'       => $price,
-                'photo_url'   => $photoUrl,
-                'message_id'  => $messageId,
-                'message_text'=> $messageText,
-                'posted_at'   => $postedAt,
-                'recorded_at' => now()->toDateTimeString(),
-            ]);
+                $product->update($updates);
+
+                PriceHistory::create([
+                    'product_id'   => $product->id,
+                    'price'        => $price,
+                    'photo_url'    => $photoUrl ?? $product->latest_photo_url,
+                    'message_id'   => $messageId,
+                    'message_text' => $messageText,
+                    'posted_at'    => $postedAt,
+                    'recorded_at'  => now()->toDateTimeString(),
+                ]);
+            });
 
             Log::info("Price updated [{$product->id}]: {$productName} → {$price}");
+
+            if ($product->canonicalProduct) {
+                $this->identityService->refreshCanonicalStats($product->canonicalProduct);
+            } else {
+                $this->identityService->resolveCanonicalProduct($product, $messageText);
+            }
+
             $this->broadcastSseEvent('updated', $product->fresh()->load('group'));
             return ['action' => 'updated', 'product' => $product->fresh()];
         }
 
-        // Only photo changed — update silently, no history entry
-        $product->update([
-            'latest_photo_url' => $photoUrl,
-            'photo_hash' => $photoHash,
-        ]);
+        // Price didn't change (either same price or incoming post had no valid price).
+        // If it's a newer post or photo changed, update timestamps/photo silently without duplicate history
+        $updates = [];
+        if ($isNewerPost) {
+            $updates['last_updated_at'] = $postedAt;
+            if ($messageId) {
+                $updates['latest_message_id'] = $messageId;
+            }
+        }
+        if ($photoChanged) {
+            $updates['latest_photo_url'] = $photoUrl;
+            if ($photoHash) {
+                $updates['photo_hash'] = $photoHash;
+            }
+        }
+
+        if (!empty($updates)) {
+            $product->update($updates);
+            if ($product->canonicalProduct) {
+                $this->identityService->refreshCanonicalStats($product->canonicalProduct);
+            }
+        }
+
         return ['action' => 'skipped', 'product' => $product];
     }
 
@@ -163,8 +212,16 @@ class IngestMessageService
 
     private function priceChanged(?float $existing, ?float $incoming): bool
     {
-        if ($existing === null && $incoming === null) return false;
-        if ($existing === null || $incoming === null) return true;
+        // Only a valid, positive incoming price can constitute a price change.
+        // A post without a valid price must never destroy an existing price.
+        if ($incoming === null || $incoming <= 0) {
+            return false;
+        }
+
+        if ($existing === null) {
+            return true;
+        }
+
         return abs($existing - $incoming) > 0.001;
     }
 

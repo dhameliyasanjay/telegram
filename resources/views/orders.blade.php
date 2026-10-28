@@ -170,6 +170,22 @@
           <span>Return</span>
         </a>
       </div>
+
+      <!-- Section: Account -->
+      <div class="nav-section">
+        <div class="nav-section-title">Account</div>
+        <a href="{{ route('profile') }}" class="nav-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Auth::user()->name ?? 'Settings' }}</span>
+        </a>
+        <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+          @csrf
+          <button type="submit" class="nav-item" style="color:var(--red); width:100%; border:none; background:none; text-align:left; cursor:pointer;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            <span>Sign Out</span>
+          </button>
+        </form>
+      </div>
     </div>
   </aside>
 
