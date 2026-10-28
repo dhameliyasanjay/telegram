@@ -18,11 +18,21 @@ class SyncTelegramGroup implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // Allow the job to run for up to 15 minutes since downloading many photos takes time
-    public $timeout = 900; 
+    public int $timeout = 900;
+    public int $tries = 3;
+    public int $maxExceptions = 3;
 
     public int $limit = 200;
     public bool $recursive = false;
     public int $offsetId = 0;
+
+    /**
+     * Exponential backoff in seconds for retries.
+     */
+    public function backoff(): array
+    {
+        return [30, 60, 180];
+    }
 
     public function __construct(
         public TelegramGroup $group,
@@ -60,19 +70,22 @@ class SyncTelegramGroup implements ShouldQueue
                     continue;
                 }
 
-                $parsed = $parser->parse($msg);
-                if (!$parsed) continue;
+                try {
+                    $parsed = $parser->parse($msg);
+                    if (!$parsed) continue;
 
-                $result = $ingestor->ingest($this->group->id, $parsed, $client);
-                $stats[$result['action']] = ($stats[$result['action']] ?? 0) + 1;
+                    $result = $ingestor->ingest($this->group->id, $parsed, $client);
+                    $stats[$result['action']] = ($stats[$result['action']] ?? 0) + 1;
+                } catch (\Throwable $itemErr) {
+                    Log::warning("Error ingesting message [{$msg['id']}] for {$this->group->title}: " . $itemErr->getMessage());
+                }
             }
 
             $this->group->update(['last_synced_at' => now()]);
 
             Log::info("Background sync completed for {$this->group->title}", $stats);
 
-            // If recursive is enabled and we fetched some messages, there are probably more messages
-            // We only continue recursion if we haven't hit the 30-day limit
+            // If recursive is enabled and we fetched some messages, continue crawling history
             if ($this->recursive && count($messages) > 0) {
                 if ($reachedLimit) {
                     Log::info("30-day historical limit reached for {$this->group->title}. Stopping recursive sync.");
@@ -80,15 +93,31 @@ class SyncTelegramGroup implements ShouldQueue
                     $lastMsgId = end($messages)['id'] ?? 0;
                     if ($lastMsgId > 1) { // 1 is usually the creation message of the channel
                         Log::info("Dispatching next batch for {$this->group->title} starting from offset ID: {$lastMsgId}");
-                        // Dispatch next chunk
-                        self::dispatch($this->group, $this->limit, true, $lastMsgId);
+                        // Dispatch next chunk with 2-second delay to prevent Telegram rate limit flooding
+                        self::dispatch($this->group, $this->limit, true, $lastMsgId)->delay(now()->addSeconds(2));
                     }
                 }
             }
 
         } catch (\Throwable $e) {
+            // Check for Telegram FLOOD_WAIT and release job back to queue
+            if (preg_match('/FLOOD_WAIT_(\d+)/i', $e->getMessage(), $m)) {
+                $seconds = (int) $m[1];
+                Log::warning("Telegram FLOOD_WAIT: {$seconds}s required for {$this->group->title}. Releasing job to queue.");
+                $this->release($seconds + 5);
+                return;
+            }
+
             Log::error("Background sync failed for {$this->group->title}: " . $e->getMessage());
-            throw $e; // Re-throw to mark job as failed
+            throw $e; // Re-throw to trigger retry policy
         }
+    }
+
+    /**
+     * Handle job failure after max tries.
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        Log::error("SyncTelegramGroup job permanently failed for group {$this->group->id} ({$this->group->title}): " . $exception?->getMessage());
     }
 }

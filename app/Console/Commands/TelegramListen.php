@@ -92,12 +92,26 @@ class TelegramUpdateHandler extends EventHandler
 
     public function onUpdateNewMessage(array $update): void
     {
-        $this->handleUpdate($update);
+        try {
+            $this->handleUpdate($update);
+        } catch (\Throwable $e) {
+            Log::error('TelegramUpdateHandler error on new message: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if (self::$command) {
+                self::$command->warn('Error processing message: ' . $e->getMessage());
+            }
+        }
     }
 
     public function onUpdateNewChannelMessage(array $update): void
     {
-        $this->handleUpdate($update);
+        try {
+            $this->handleUpdate($update);
+        } catch (\Throwable $e) {
+            Log::error('TelegramUpdateHandler error on channel message: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if (self::$command) {
+                self::$command->warn('Error processing channel message: ' . $e->getMessage());
+            }
+        }
     }
 
     private function handleUpdate(array $update): void
@@ -106,26 +120,36 @@ class TelegramUpdateHandler extends EventHandler
         if (empty($message)) return;
 
         $peer = $message['peer_id'] ?? $message['to_id'] ?? [];
-        $chatId = abs($peer['channel_id'] ?? $peer['chat_id'] ?? 0);
+        $rawId = abs($peer['channel_id'] ?? $peer['chat_id'] ?? 0);
+        if (!$rawId) return;
 
-        if (!$chatId) return;
+        // Try getting unified Bot API ID from MadelineProto, otherwise compute prefix candidate
+        $chatId = $rawId;
+        try {
+            if (method_exists($this, 'getId')) {
+                $chatId = abs((int) $this->getId($peer));
+            }
+        } catch (\Throwable $e) {
+            $chatId = $rawId;
+        }
 
-        // Periodically update the group map (every 60 seconds) so we don't query DB on every message
+        // Periodically refresh the group map (every 60 seconds)
         if (time() - $this->lastMapUpdate > 60) {
             $this->updateGroupMap();
         }
 
-        // If it's a new group that isn't cached yet, fetch it immediately
-        if (!isset($this->groupMap[$chatId])) {
-            $newGroup = TelegramGroup::where('telegram_id', $chatId)->first();
-            if ($newGroup) {
-                $this->groupMap[$chatId] = $newGroup->id;
-            } else {
-                return; // Not a monitored group
-            }
+        // Match against Bot API ID or raw channel ID
+        $dbGroupId = $this->groupMap[$chatId] ?? $this->groupMap[$rawId] ?? null;
+
+        // If not in cache, refresh once to check if a new group was just added
+        if (!$dbGroupId) {
+            $this->updateGroupMap();
+            $dbGroupId = $this->groupMap[$chatId] ?? $this->groupMap[$rawId] ?? null;
         }
 
-        $dbGroupId = $this->groupMap[$chatId];
+        if (!$dbGroupId) {
+            return; // Not a monitored group
+        }
 
         $parsed = $this->parser->parse($message);
         if (!$parsed) return;
@@ -147,7 +171,22 @@ class TelegramUpdateHandler extends EventHandler
 
     private function updateGroupMap(): void
     {
-        $this->groupMap = TelegramGroup::pluck('id', 'telegram_id')->toArray();
+        $map = [];
+        $groups = TelegramGroup::all(['id', 'telegram_id']);
+
+        foreach ($groups as $g) {
+            $tid = (int) $g->telegram_id;
+            $map[$tid] = $g->id;
+
+            // Also store without '100' prefix so raw channel IDs also match
+            $tidStr = (string) $tid;
+            if (str_starts_with($tidStr, '100')) {
+                $raw = (int) substr($tidStr, 3);
+                $map[$raw] = $g->id;
+            }
+        }
+
+        $this->groupMap = $map;
         $this->lastMapUpdate = time();
     }
 }

@@ -41,8 +41,11 @@ class IngestMessageService
         if ($client && ($parsed['has_media'] ?? false)) {
             $photoUrl = $this->telegramClient->downloadPhoto($client, $parsed['raw_message'] ?? []);
             if ($photoUrl) {
-                $localPath = public_path(str_replace('/storage/', 'storage/', $photoUrl));
-                if (file_exists($localPath)) {
+                $relPath = ltrim(str_replace('/storage/', '', $photoUrl), '/');
+                $diskPath = storage_path('app/public/' . $relPath);
+                $localPath = file_exists($diskPath) ? $diskPath : public_path('storage/' . $relPath);
+
+                if (file_exists($localPath) && filesize($localPath) > 0) {
                     $cmd = 'python3 ' . base_path('phash.py') . ' ' . escapeshellarg($localPath);
                     $rawOutput = shell_exec($cmd);
                     $output = $rawOutput !== null ? trim((string) $rawOutput) : '';
@@ -235,13 +238,14 @@ class IngestMessageService
                 'action'     => $action,
                 'product_id' => $product->id,
                 'product'    => [
-                    'id'               => $product->id,
-                    'product_name'     => $product->product_name,
-                    'latest_price'     => $product->latest_price,
-                    'latest_photo_url' => $product->latest_photo_url,
-                    'last_updated_at'  => $product->last_updated_at?->toIso8601String(),
-                    'group_title'      => $product->group?->title ?? 'Unknown',
-                    'group_id'         => $product->group_id,
+                    'id'                   => $product->id,
+                    'canonical_product_id' => $product->canonical_product_id,
+                    'product_name'         => $product->product_name,
+                    'latest_price'         => $product->latest_price,
+                    'latest_photo_url'     => $product->latest_photo_url,
+                    'last_updated_at'      => $product->last_updated_at?->toIso8601String(),
+                    'group_title'          => $product->group?->title ?? 'Unknown',
+                    'group_id'             => $product->group_id,
                 ],
                 'ts' => now()->toIso8601String(),
             ];

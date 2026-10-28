@@ -125,16 +125,28 @@ class TelegramClientService
             $fetched   = 0;
 
             while ($fetched < $limit) {
-                $batch = $client->messages->getHistory([
-                    'peer'        => $peer,
-                    'offset_id'   => $offsetId,
-                    'offset_date' => 0,
-                    'add_offset'  => 0,
-                    'limit'       => $batchSize,
-                    'max_id'      => 0,
-                    'min_id'      => 0,
-                    'hash'        => 0,
-                ]);
+                try {
+                    $batch = $client->messages->getHistory([
+                        'peer'        => $peer,
+                        'offset_id'   => $offsetId,
+                        'offset_date' => 0,
+                        'add_offset'  => 0,
+                        'limit'       => $batchSize,
+                        'max_id'      => 0,
+                        'min_id'      => 0,
+                        'hash'        => 0,
+                    ]);
+                } catch (\Throwable $histErr) {
+                    if (preg_match('/FLOOD_WAIT_(\d+)/i', $histErr->getMessage(), $m)) {
+                        $waitSec = (int) $m[1];
+                        if ($waitSec <= 15) {
+                            Log::warning("Telegram getHistory FLOOD_WAIT_{$waitSec}s. Sleeping and retrying once.");
+                            sleep($waitSec + 1);
+                            continue;
+                        }
+                    }
+                    throw $histErr;
+                }
 
                 $msgs = $batch['messages'] ?? [];
                 if (empty($msgs)) break;
@@ -173,6 +185,14 @@ class TelegramClientService
             if (!is_dir($dir)) mkdir($dir, 0755, true);
 
             $client->downloadToFile($media, $localPath);
+
+            // Verify file actually exists and has positive size
+            if (!file_exists($localPath) || filesize($localPath) === 0) {
+                if (file_exists($localPath)) {
+                    @unlink($localPath);
+                }
+                return null;
+            }
 
             return '/storage/' . $filename;
         } catch (\Throwable $e) {
