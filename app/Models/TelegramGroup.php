@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -15,6 +16,9 @@ class TelegramGroup extends Model
         'invite_link',
         'member_count',
         'photo_url',
+        'is_active',
+        'sync_status',
+        'last_error',
         'added_at',
         'last_synced_at',
     ];
@@ -22,9 +26,18 @@ class TelegramGroup extends Model
     protected $casts = [
         'telegram_id'    => 'integer',
         'member_count'   => 'integer',
+        'is_active'      => 'boolean',
         'added_at'       => 'datetime',
         'last_synced_at' => 'datetime',
     ];
+
+    /**
+     * Scope query to only monitored/active groups.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
 
     public function products(): HasMany
     {

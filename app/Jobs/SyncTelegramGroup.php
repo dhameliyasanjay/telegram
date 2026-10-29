@@ -52,6 +52,13 @@ class SyncTelegramGroup implements ShouldQueue
     ): void {
         Log::info("Starting background sync for group: {$this->group->title} (Limit: {$this->limit}, Offset: {$this->offsetId}, Recursive: " . ($this->recursive ? 'Yes' : 'No') . ")");
 
+        if (!$this->group->is_active) {
+            Log::info("Group [{$this->group->id}] {$this->group->title} is paused (inactive). Skipping sync.");
+            return;
+        }
+
+        $this->group->update(['sync_status' => 'syncing']);
+
         try {
             $client = $telegramClient->getClient();
             $client->start();
@@ -81,7 +88,11 @@ class SyncTelegramGroup implements ShouldQueue
                 }
             }
 
-            $this->group->update(['last_synced_at' => now()]);
+            $this->group->update([
+                'last_synced_at' => now(),
+                'sync_status'    => 'idle',
+                'last_error'     => null,
+            ]);
 
             Log::info("Background sync completed for {$this->group->title}", $stats);
 
@@ -109,6 +120,10 @@ class SyncTelegramGroup implements ShouldQueue
             }
 
             Log::error("Background sync failed for {$this->group->title}: " . $e->getMessage());
+            $this->group->update([
+                'sync_status' => 'failed',
+                'last_error'  => mb_substr($e->getMessage(), 0, 500),
+            ]);
             throw $e; // Re-throw to trigger retry policy
         }
     }

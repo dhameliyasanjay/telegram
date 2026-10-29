@@ -13,7 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'admin'       => \App\Http\Middleware\EnsureAdmin::class,
+            'not_blocked' => \App\Http\Middleware\CheckNotBlocked::class,
+        ]);
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\CheckNotBlocked::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

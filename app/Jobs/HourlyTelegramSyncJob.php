@@ -39,7 +39,7 @@ class HourlyTelegramSyncJob implements ShouldQueue
         $startTime = microtime(true);
         Log::info("=== Starting Hourly Telegram Sync Job ===");
 
-        $groups = TelegramGroup::all();
+        $groups = TelegramGroup::where('is_active', true)->get();
         $summary = [
             'groups_total'     => $groups->count(),
             'groups_synced'    => 0,
