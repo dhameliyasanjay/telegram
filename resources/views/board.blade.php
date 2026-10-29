@@ -397,17 +397,36 @@ body {
 }
 
 /* Modal */
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  overflow-y: auto; overscroll-behavior: contain; padding: 24px 16px; box-sizing: border-box;
+}
 .modal-bg.open { opacity: 1; pointer-events: all; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; width: 100%; max-width: 480px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); transform: translateY(20px); transition: transform 0.3s; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 32px 28px; width: 100%; max-width: 480px; max-height: 90vh;
+  overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; margin: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6); transform: translateY(20px); transition: transform 0.3s;
+}
 .modal-bg.open .modal { transform: translateY(0); }
+.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+.modal::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.35); }
 .modal h2 { font-size: 24px; margin-bottom: 12px; font-weight: 700;}
 .modal p { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; line-height: 1.6; }
 .modal input {
-  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 24px;
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 20px; box-sizing: border-box;
 }
 .modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
 
 /* Toasts */
 .toast-wrap { position: fixed; bottom: 32px; right: 32px; display: flex; flex-direction: column; gap: 12px; z-index: 500; }
@@ -733,7 +752,7 @@ body {
 
 <!-- Subscription Plan Modal -->
 <div class="modal-bg" id="subscriptionPlanModal" onclick="if(event.target===this)closeSubscriptionPlanModal()">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; border-radius: 16px; padding: 28px 24px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 16px; padding: 24px 22px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
     
     <!-- STEP 1: Overview & Status -->
     <div id="subPlanViewStep">
@@ -820,50 +839,50 @@ body {
 
     <!-- STEP 2: Checkout / Purchase Form -->
     <div id="subPlanOrderStep" style="display: none;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <button type="button" onclick="showPlanViewStep()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; padding: 0;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg> Back to Plan
         </button>
         <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <div style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 4px;">Activate Pro Plan (₹49)</div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Please provide your contact details so our administrator can verify payment and activate your 30-day Pro plan.</p>
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;">Activate Pro Plan (₹49)</div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Please provide your contact details so our administrator can verify payment and activate your 30-day Pro plan.</p>
       </div>
 
-      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="font-size: 0.88rem; color: #fff; font-weight: 600;">Plan: Price Monitor Pro</span>
-        <span style="font-size: 1.1rem; color: #60a5fa; font-weight: 700;">₹49 <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">/ 30 Days</span></span>
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Plan: Price Monitor Pro</span>
+        <span style="font-size: 1.05rem; color: #60a5fa; font-weight: 700;">₹49 <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">/ 30 Days</span></span>
       </div>
 
       <form id="subOrderForm" onsubmit="event.preventDefault(); submitSubscriptionOrder();">
-        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
           <div>
-            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">Your Full Name <span style="color:#ef4444;">*</span></label>
-            <input type="text" id="subOrderName" value="{{ Auth::user()->name }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. Sanjay Patel">
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Your Full Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="subOrderName" value="{{ Auth::user()->name }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. Sanjay Patel">
           </div>
 
           <div>
-            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">WhatsApp / Mobile Number <span style="color:#ef4444;">*</span></label>
-            <input type="tel" id="subOrderPhone" value="{{ Auth::user()->phone ?? '' }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. 9825104231">
-            <span style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; display: block;">We will contact you directly on WhatsApp/Call to confirm activation.</span>
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">WhatsApp / Mobile Number <span style="color:#ef4444;">*</span></label>
+            <input type="tel" id="subOrderPhone" value="{{ Auth::user()->phone ?? '' }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. 9825104231">
+            <span style="font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; display: block;">We will contact you directly on WhatsApp/Call to confirm activation.</span>
           </div>
 
           <div>
-            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">City / Market Location</label>
-            <input type="text" id="subOrderCity" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. Surat, Ahmedabad, Rajkot, Mumbai...">
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">City / Market Location</label>
+            <input type="text" id="subOrderCity" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. Surat, Ahmedabad, Rajkot, Mumbai...">
           </div>
 
           <div>
-            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">Note / UPI ID (Optional)</label>
-            <input type="text" id="subOrderNotes" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="Any note or payment reference">
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Note / UPI ID (Optional)</label>
+            <input type="text" id="subOrderNotes" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="Any note or payment reference">
           </div>
         </div>
 
-        <div id="subOrderError" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px;"></div>
+        <div id="subOrderError" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 12px;"></div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 2px;">
           <button type="button" class="btn btn-ghost" onclick="showPlanViewStep()">Back</button>
           <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
             Submit Order & Request Activation (₹49) &rarr;
@@ -911,7 +930,7 @@ body {
 
 <!-- Trial Expired Auto-Scroll Popup Modal -->
 <div class="modal-bg" id="trialExpiredNoticeModal" onclick="if(event.target===this)closeTrialExpiredModal()">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width: 480px; width: 100%; border-radius: 18px; padding: 32px 28px; background: #18181b; border: 1px solid rgba(239, 68, 68, 0.25); box-shadow: 0 25px 60px rgba(0,0,0,0.8); text-align: center;">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 18px; padding: 28px 24px; background: #18181b; border: 1px solid rgba(239, 68, 68, 0.25); box-shadow: 0 25px 60px rgba(0,0,0,0.8); text-align: center;">
     
     <div style="width: 60px; height: 60px; border-radius: 16px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
       <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -1251,14 +1270,35 @@ function setupTrialExpiredScrollTrigger() {
   }, { passive: true });
 }
 
+function lockBodyScroll(locked) {
+  if (locked) {
+    document.body.classList.add('modal-open');
+  } else {
+    setTimeout(() => {
+      const anyOpen = document.querySelector('.modal-bg.open, .cat-modal-bg.open, .drawer.open');
+      if (!anyOpen) {
+        document.body.classList.remove('modal-open');
+      }
+    }, 50);
+  }
+}
+
 function openTrialExpiredModal() {
   const m = document.getElementById('trialExpiredNoticeModal');
-  if (m) m.classList.add('open');
+  if (m) {
+    const box = m.querySelector('.modal');
+    if (box) box.scrollTop = 0;
+    m.classList.add('open');
+    lockBodyScroll(true);
+  }
 }
 
 function closeTrialExpiredModal() {
   const m = document.getElementById('trialExpiredNoticeModal');
-  if (m) m.classList.remove('open');
+  if (m) {
+    m.classList.remove('open');
+    lockBodyScroll(false);
+  }
 }
 
 // ── SSE ───────────────────────────────────────────────────────────────────
@@ -1565,6 +1605,7 @@ async function openCompareDrawer(id) {
 
   overlay.classList.add('open');
   drawer.classList.add('open');
+  lockBodyScroll(true);
 
   if (!USER_HAS_ACTIVE_ACCESS) {
     document.getElementById('compareHeroGrid')?.classList.add('paywall-blur-heavy');
@@ -1760,6 +1801,7 @@ function renderCompareDrawer(p) {
 function closeCompareDrawer() {
   document.getElementById('compareDrawer').classList.remove('open');
   document.getElementById('compareOverlay').classList.remove('open');
+  lockBodyScroll(false);
 }
 
 async function toggleOfferHistory(offerId, btnEl) {
@@ -1821,6 +1863,7 @@ async function showHistory(id, name, group) {
   
   overlay.classList.add('open');
   drawer.classList.add('open');
+  lockBodyScroll(true);
   
   try {
     const r = await fetch(`${API}/products/${id}/history`);
@@ -1854,11 +1897,28 @@ async function showHistory(id, name, group) {
 function closeHistory() { 
     document.getElementById('historyDrawer').classList.remove('open'); 
     document.getElementById('historyOverlay').classList.remove('open'); 
+    lockBodyScroll(false);
 }
 
 // ── Channel Modal ───────────────────────────────────────────────────────
-function openAddModal() { document.getElementById('addModal').classList.add('open'); document.getElementById('groupLinkInput').focus(); }
-function closeAddModal() { document.getElementById('addModal').classList.remove('open'); document.getElementById('addError').style.display='none'; }
+function openAddModal() {
+  const m = document.getElementById('addModal');
+  if (m) {
+    m.classList.add('open');
+    const box = m.querySelector('.modal');
+    if (box) box.scrollTop = 0;
+    document.getElementById('groupLinkInput').focus();
+    lockBodyScroll(true);
+  }
+}
+function closeAddModal() {
+  const m = document.getElementById('addModal');
+  if (m) {
+    m.classList.remove('open');
+    document.getElementById('addError').style.display='none';
+    lockBodyScroll(false);
+  }
+}
 
 // ── Subscription Plan Modal ────────────────────────────────────────────────
 function openSubscriptionPlanModal() {
@@ -1868,13 +1928,19 @@ function openSubscriptionPlanModal() {
     if (!successStep || successStep.style.display !== 'block') {
       showPlanViewStep();
     }
+    const box = m.querySelector('.modal');
+    if (box) box.scrollTop = 0;
     m.classList.add('open');
+    lockBodyScroll(true);
   }
 }
 
 function closeSubscriptionPlanModal() {
   const m = document.getElementById('subscriptionPlanModal');
-  if (m) m.classList.remove('open');
+  if (m) {
+    m.classList.remove('open');
+    lockBodyScroll(false);
+  }
 }
 
 function showPlanViewStep() {
@@ -1884,6 +1950,8 @@ function showPlanViewStep() {
   if (v) v.style.display = 'block';
   if (o) o.style.display = 'none';
   if (s) s.style.display = 'none';
+  const box = document.querySelector('#subscriptionPlanModal .modal');
+  if (box) box.scrollTop = 0;
 }
 
 function showPlanOrderStep() {
@@ -1893,6 +1961,8 @@ function showPlanOrderStep() {
   if (v) v.style.display = 'none';
   if (o) o.style.display = 'block';
   if (s) s.style.display = 'none';
+  const box = document.querySelector('#subscriptionPlanModal .modal');
+  if (box) box.scrollTop = 0;
   setTimeout(() => {
     const p = document.getElementById('subOrderPhone');
     if (p && !p.value) p.focus();
