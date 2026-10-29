@@ -51,7 +51,15 @@ class AuthTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'trader@example.com',
             'name'  => 'Test Trader',
+            'role'  => 'user',
+            'status'=> 'active',
+            'subscription_status' => 'trial',
         ]);
+
+        $user = User::where('email', 'trader@example.com')->firstOrFail();
+        $this->assertNotNull($user->trial_ends_at);
+        $this->assertTrue($user->trial_ends_at->isFuture());
+        $this->assertTrue($user->hasActiveAccess());
     }
 
     public function test_user_cannot_register_with_invalid_email_or_short_password(): void

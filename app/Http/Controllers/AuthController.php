@@ -85,16 +85,27 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'confirmed', PasswordRule::min(8)],
         ]);
 
-        $user = User::create([
+        $trialDays = (int) app(\App\Services\SettingService::class)->get('trial_days', 30);
+        if ($trialDays <= 0) {
+            $trialDays = 30;
+        }
+
+        $user = new User([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::login($user);
+        $user->role = 'user';
+        $user->status = 'active';
+        $user->subscription_status = 'trial';
+        $user->trial_ends_at = now()->addDays($trialDays);
+        $user->save();
+
+        Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended('/')->with('success', 'Welcome! Your account has been created successfully.');
+        return redirect()->intended('/')->with('success', "Welcome, {$user->name}! Your {$trialDays}-day free trial has been activated.");
     }
 
     /**
