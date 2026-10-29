@@ -294,3 +294,4 @@ class AdminGroupController extends Controller
         return redirect()->route('admin.groups.index')->with('success', $msg);
     }
 }
+

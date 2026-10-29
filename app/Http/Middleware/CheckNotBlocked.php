@@ -27,3 +27,4 @@ class CheckNotBlocked
         return $next($request);
     }
 }
+

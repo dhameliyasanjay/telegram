@@ -51,3 +51,4 @@ class AssignAdminRole extends Command
         return Command::SUCCESS;
     }
 }
+

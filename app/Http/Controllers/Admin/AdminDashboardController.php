@@ -87,3 +87,4 @@ class AdminDashboardController extends Controller
         return view('admin.dashboard', $data);
     }
 }
+

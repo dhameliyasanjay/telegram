@@ -81,3 +81,4 @@ class AdminActivityLog extends Model
         return $data;
     }
 }
+

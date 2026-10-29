@@ -178,6 +178,12 @@
       <!-- Section: Account -->
       <div class="nav-section">
         <div class="nav-section-title">Account</div>
+        @if(Auth::check() && Auth::user()->isAdmin())
+          <a href="{{ route('admin.dashboard') }}" class="nav-item" style="color: #60a5fa; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 6px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span style="font-weight: 600;">Admin Panel</span>
+          </a>
+        @endif
         <a href="{{ route('profile') }}" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Auth::user()->name ?? 'Settings' }}</span>

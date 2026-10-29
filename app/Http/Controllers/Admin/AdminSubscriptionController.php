@@ -126,3 +126,4 @@ class AdminSubscriptionController extends Controller
         return back()->with('success', $msg);
     }
 }
+
