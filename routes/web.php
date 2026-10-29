@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments', [TransactionController::class, 'paymentsIndex'])->name('payments');
     Route::get('/orders', [TransactionController::class, 'ordersIndex'])->name('orders');
     Route::get('/returns', [TransactionController::class, 'returnsIndex'])->name('returns');
+
+    Route::post('/subscription/purchase', [\App\Http\Controllers\SubscriptionController::class, 'purchase'])->name('subscription.purchase');
 });
 
 // ── Dedicated Admin Authentication Routes ────────────────────────────────────
@@ -85,6 +87,7 @@ Route::prefix('admin')->middleware(['admin'])->name('admin.')->group(function ()
     // Subscriptions
     Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscriptions/plan', [AdminSubscriptionController::class, 'updatePlan'])->name('subscriptions.plan');
+    Route::post('/subscriptions/orders/{id}/activate', [AdminSubscriptionController::class, 'activateOrder'])->name('subscriptions.orders.activate');
 
     // Settings
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');

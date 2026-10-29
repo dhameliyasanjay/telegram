@@ -220,7 +220,7 @@ body {
           @elseif($user->subscription_ends_at && $user->subscription_ends_at->isFuture())
             {{ $user->subscription_ends_at->format('M d, Y') }}
           @elseif($user->trial_ends_at && $user->trial_ends_at->isFuture())
-            {{ $user->trial_ends_at->format('M d, Y') }} ({{ max(0, now()->diffInDays($user->trial_ends_at)) }} days left)
+            {{ $user->trial_ends_at->format('M d, Y') }} ({{ (int) ceil(max(0, now()->diffInDays($user->trial_ends_at))) }} days left)
           @else
             Access Expired
           @endif

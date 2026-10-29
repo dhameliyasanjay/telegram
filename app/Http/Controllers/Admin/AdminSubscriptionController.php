@@ -74,6 +74,11 @@ class AdminSubscriptionController extends Controller
 
         $subscribers = $query->orderByDesc('id')->paginate(15)->withQueryString();
 
+        $recentOrders = \App\Models\SubscriptionOrder::with('user')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get();
+
         $data = [
             'trialDays'        => $trialDays,
             'planPrice'        => $planPrice,
@@ -83,6 +88,7 @@ class AdminSubscriptionController extends Controller
             'activeTrialCount' => $activeTrialCount,
             'expiredCount'     => $expiredCount,
             'subscribers'      => $subscribers,
+            'recentOrders'     => $recentOrders,
             'filters'          => $request->only(['status', 'search']),
         ];
 
@@ -91,6 +97,41 @@ class AdminSubscriptionController extends Controller
         }
 
         return view('admin.subscriptions.index', $data);
+    }
+
+    /**
+     * Activate customer subscription order directly from Admin Panel.
+     */
+    public function activateOrder(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        $order = \App\Models\SubscriptionOrder::findOrFail($id);
+
+        if ($order->user) {
+            $order->user->grantSubscription($order->plan_duration_days);
+        }
+
+        $order->status = 'active';
+        $order->activated_at = now();
+        $order->save();
+
+        AdminActivityLog::record(
+            'subscription_order_activated',
+            "Activated Pro plan for order #{$order->id} - Customer [{$order->customer_name}] ({$order->customer_phone})",
+            $order,
+            [
+                'phone'   => $order->customer_phone,
+                'email'   => $order->customer_email,
+                'amount'  => $order->amount,
+            ]
+        );
+
+        $msg = "Subscription activated for {$order->customer_name} ({$order->customer_phone}) for {$order->plan_duration_days} days!";
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**

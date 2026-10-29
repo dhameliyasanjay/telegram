@@ -24,6 +24,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
     ];
 
@@ -80,5 +81,38 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * Grant or extend paid subscription duration.
+     */
+    public function grantSubscription(int $days = 30): void
+    {
+        $base = ($this->subscription_ends_at && $this->subscription_ends_at->isFuture()) ? $this->subscription_ends_at : now();
+        $this->subscription_ends_at = $base->copy()->addDays($days);
+        $this->subscription_status = 'active';
+        $this->save();
+    }
+
+    /**
+     * Grant or extend free trial duration.
+     */
+    public function extendTrial(int $days = 30): void
+    {
+        $base = ($this->trial_ends_at && $this->trial_ends_at->isFuture()) ? $this->trial_ends_at : now();
+        $this->trial_ends_at = $base->copy()->addDays($days);
+        $this->subscription_status = 'trial';
+        $this->save();
+    }
+
+    /**
+     * Expire all trial and paid subscription access immediately.
+     */
+    public function expireAccess(): void
+    {
+        $this->trial_ends_at = now()->subMinute();
+        $this->subscription_ends_at = now()->subMinute();
+        $this->subscription_status = 'expired';
+        $this->save();
     }
 }

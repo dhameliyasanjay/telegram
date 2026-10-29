@@ -186,11 +186,11 @@ body {
   border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
   color: #fff; cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center;
-  opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
+  opacity: 0.85; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: all;
 }
-.card:hover .card-download-btn { opacity: 1; pointer-events: all; }
-.card-download-btn:hover { background: rgba(59,130,246,0.85); border-color: rgba(59,130,246,0.5); transform: scale(1.05); }
+.card:hover .card-download-btn { opacity: 1; }
+.card-download-btn:hover { opacity: 1; background: rgba(59,130,246,0.9); border-color: rgba(59,130,246,0.6); transform: scale(1.08); }
 
 /* Paywall Blur Styles for Expired Users */
 .paywall-blur {
@@ -638,7 +638,7 @@ body {
             @elseif(Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
               <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
               <span style="color: #fbbf24; font-weight: 600;">Free Trial</span>
-              <span style="color: #a1a1aa; font-size: 0.75rem;">({{ max(0, now()->diffInDays(Auth::user()->trial_ends_at)) }} days left)</span>
+              <span style="color: #a1a1aa; font-size: 0.75rem;">({{ (int) ceil(max(0, now()->diffInDays(Auth::user()->trial_ends_at))) }} days left)</span>
             @else
               <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
               <span style="color: #f87171; font-weight: 600;">Trial Expired</span>
@@ -759,86 +759,179 @@ body {
 
 <!-- Subscription Plan Modal -->
 <div class="modal-bg" id="subscriptionPlanModal" onclick="if(event.target===this)closeSubscriptionPlanModal()">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; border-radius: 16px; padding: 32px 28px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;">
-      <div>
-        <div style="display:inline-flex; align-items:center; gap:6px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #60a5fa; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
-          ✦ Plan & Membership
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; border-radius: 16px; padding: 28px 24px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+    
+    <!-- STEP 1: Overview & Status -->
+    <div id="subPlanViewStep">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:6px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #60a5fa; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
+            ✦ Plan & Membership
+          </div>
+          <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin:0;">Price Monitor Pro</h2>
         </div>
-        <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin:0;">Price Monitor Pro</h2>
+        <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
       </div>
-      <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
+
+      <!-- Current Status Box -->
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; letter-spacing:0.05em;">Current Membership Status</div>
+        @if(Auth::user()->isAdmin())
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 1.15rem; font-weight: 700; color: #a78bfa;">Administrator Account</span>
+            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3);">Unlimited</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">You have full administrative privileges across all groups, products, and user accounts.</p>
+        @elseif(Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 1.15rem; font-weight: 700; color: #34d399;">Pro Plan Active</span>
+            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">Valid until {{ Auth::user()->subscription_ends_at->format('M d, Y') }}</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Full access to live price comparisons, wholesale supplier contacts, and multi-group price monitoring.</p>
+        @elseif(Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;">30-Day Free Trial</span>
+            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3);">{{ (int) ceil(max(0, now()->diffInDays(Auth::user()->trial_ends_at))) }} Days Left</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+            Your free trial is active and valid until <strong>{{ Auth::user()->trial_ends_at->format('M d, Y') }}</strong>. All features & contact details are currently unlocked.
+          </p>
+        @else
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 1.15rem; font-weight: 700; color: #f87171;">Trial Expired</span>
+            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">Access Expired</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+            Your free trial has ended. Subscribe now to unlock supplier details, phone numbers, and live market prices!
+          </p>
+        @endif
+      </div>
+
+      <!-- Plan Feature Highlights -->
+      <div style="margin-bottom: 24px;">
+        <div style="font-size: 0.82rem; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <span>Plan Benefits</span>
+          <span style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">₹49 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>Monitor 21+ Telegram groups simultaneously</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>Supplier Phone, WhatsApp, City & Shop Address access</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>Lowest price detection & price difference spread</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>High-resolution product photo downloads</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="btn btn-ghost" onclick="closeSubscriptionPlanModal()">Close</button>
+        @if(!Auth::user()->isAdmin())
+          <button class="btn btn-primary" onclick="showPlanOrderStep()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); font-weight: 600;">
+            {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription (₹49)' : 'Subscribe Now (₹49 / 30d)' }} &rarr;
+          </button>
+        @endif
+      </div>
     </div>
 
-    <!-- Current Status Box -->
-    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
-      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; letter-spacing:0.05em;">Current Membership Status</div>
-      @if(Auth::user()->isAdmin())
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 1.15rem; font-weight: 700; color: #a78bfa;">Administrator Account</span>
-          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3);">Unlimited</span>
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">You have full administrative privileges across all groups, products, and user accounts.</p>
-      @elseif(Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 1.15rem; font-weight: 700; color: #34d399;">Pro Plan Active</span>
-          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">Valid until {{ Auth::user()->subscription_ends_at->format('M d, Y') }}</span>
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Full access to live price comparisons, automated deduplication, and multi-group price monitoring.</p>
-      @elseif(Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;">30-Day Free Trial</span>
-          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3);">{{ max(0, now()->diffInDays(Auth::user()->trial_ends_at)) }} Days Left</span>
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
-          Your free trial is active and valid until <strong>{{ Auth::user()->trial_ends_at->format('M d, Y') }}</strong>. All features are currently available to you.
-        </p>
-      @else
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 1.15rem; font-weight: 700; color: #f87171;">Trial Expired</span>
-          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">Access Expired</span>
-        </div>
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
-          Your free trial has ended. Please subscribe to continue enjoying live price comparisons across Telegram channels.
-        </p>
-      @endif
-    </div>
-
-    <!-- Plan Feature Highlights -->
-    <div style="margin-bottom: 24px;">
-      <div style="font-size: 0.82rem; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-        <span>Plan Benefits</span>
-        <span style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">₹49 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-          <span>Monitor 21+ Telegram groups simultaneously</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-          <span>AI & Deterministic smart deduplication</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-          <span>Lowest price detection & price difference spread</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-          <span>Complete price history & observation records</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div style="display: flex; justify-content: flex-end; gap: 12px;">
-      <button class="btn btn-ghost" onclick="closeSubscriptionPlanModal()">Close</button>
-      @if(!Auth::user()->isAdmin())
-        <button class="btn btn-primary" onclick="alert('Subscription gateway will connect here. Your current access is active!'); closeSubscriptionPlanModal();" style="background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
-          {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription (₹49)' : 'Subscribe Now (₹49 / 30d)' }}
+    <!-- STEP 2: Checkout / Purchase Form -->
+    <div id="subPlanOrderStep" style="display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <button type="button" onclick="showPlanViewStep()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; padding: 0;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg> Back to Plan
         </button>
-      @endif
+        <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 4px;">Activate Pro Plan (₹49)</div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Please provide your contact details so our administrator can verify payment and activate your 30-day Pro plan.</p>
+      </div>
+
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.88rem; color: #fff; font-weight: 600;">Plan: Price Monitor Pro</span>
+        <span style="font-size: 1.1rem; color: #60a5fa; font-weight: 700;">₹49 <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">/ 30 Days</span></span>
+      </div>
+
+      <form id="subOrderForm" onsubmit="event.preventDefault(); submitSubscriptionOrder();">
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
+          <div>
+            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">Your Full Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="subOrderName" value="{{ Auth::user()->name }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. Sanjay Patel">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">WhatsApp / Mobile Number <span style="color:#ef4444;">*</span></label>
+            <input type="tel" id="subOrderPhone" value="{{ Auth::user()->phone ?? '' }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. 9825104231">
+            <span style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; display: block;">We will contact you directly on WhatsApp/Call to confirm activation.</span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">City / Market Location</label>
+            <input type="text" id="subOrderCity" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. Surat, Ahmedabad, Rajkot, Mumbai...">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; font-weight: 600;">Note / UPI ID (Optional)</label>
+            <input type="text" id="subOrderNotes" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="Any note or payment reference">
+          </div>
+        </div>
+
+        <div id="subOrderError" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px;"></div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-ghost" onclick="showPlanViewStep()">Back</button>
+          <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
+            Submit Order & Request Activation (₹49) &rarr;
+          </button>
+        </div>
+      </form>
     </div>
+
+    <!-- STEP 3: Order Placed Success Confirmation -->
+    <div id="subPlanSuccessStep" style="display: none; text-align: center; padding: 16px 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 2px solid #10b981; color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Subscription Request Placed!</h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your request for the <strong>30-Day Pro Plan (₹49)</strong> has been registered.
+      </p>
+
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>Contact Number:</span>
+          <strong id="subSuccessPhone" style="color: #34d399;">—</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>Amount:</span>
+          <strong style="color: #fff;">₹49.00</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Status:</span>
+          <span style="color: #fbbf24; font-weight: 600;">Pending Verification</span>
+        </div>
+      </div>
+
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 12px 14px; font-size: 0.82rem; color: #93c5fd; margin-bottom: 20px; line-height: 1.5;">
+        💬 Our administrator <strong>Sanjay</strong> has received your contact details and will message/call you on WhatsApp to activate your account.
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="closeSubscriptionPlanModal()" style="width: 100%; padding: 12px; font-weight: 600; background: #3b82f6; color: #fff; border:none; border-radius: 8px; cursor: pointer;">
+        Back to Dashboard
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -1625,7 +1718,7 @@ function renderCompareDrawer(p) {
           ${phoneText ? `
             <div style="display:inline-flex; align-items:center; gap:5px; color:#d4d4d8;">
               <svg width="13" height="13" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-              <span><strong>Contact:</strong> ${USER_HAS_ACTIVE_ACCESS && o.group_phone ? `<a href="tel:${escHtml(o.group_phone)}" style="color:#10b981; font-weight:600; text-decoration:none;">${escHtml(o.group_phone)}</a>` : escHtml(phoneText)}</span>
+              <span><strong>Contact:</strong> ${USER_HAS_ACTIVE_ACCESS && o.group_phone ? `<a href="tel:${escHtml(o.group_phone)}" style="color:#10b981; font-weight:600; text-decoration:none;">${escHtml(o.group_phone)}</a> <a href="https://wa.me/${escHtml(o.group_phone.replace(/[^0-9]/g, ''))}" target="_blank" rel="noopener noreferrer" style="color:#34d399; margin-left:6px; text-decoration:none; background:rgba(16,185,129,0.15); padding:2px 6px; border-radius:4px; font-size:11px;">💬 WhatsApp</a>` : escHtml(phoneText)}</span>
             </div>` : ''}
         </div>
         ${addrText ? `
@@ -1790,11 +1883,118 @@ function closeAddModal() { document.getElementById('addModal').classList.remove(
 // ── Subscription Plan Modal ────────────────────────────────────────────────
 function openSubscriptionPlanModal() {
   const m = document.getElementById('subscriptionPlanModal');
-  if (m) m.classList.add('open');
+  if (m) {
+    const successStep = document.getElementById('subPlanSuccessStep');
+    if (!successStep || successStep.style.display !== 'block') {
+      showPlanViewStep();
+    }
+    m.classList.add('open');
+  }
 }
+
 function closeSubscriptionPlanModal() {
   const m = document.getElementById('subscriptionPlanModal');
   if (m) m.classList.remove('open');
+}
+
+function showPlanViewStep() {
+  const v = document.getElementById('subPlanViewStep');
+  const o = document.getElementById('subPlanOrderStep');
+  const s = document.getElementById('subPlanSuccessStep');
+  if (v) v.style.display = 'block';
+  if (o) o.style.display = 'none';
+  if (s) s.style.display = 'none';
+}
+
+function showPlanOrderStep() {
+  const v = document.getElementById('subPlanViewStep');
+  const o = document.getElementById('subPlanOrderStep');
+  const s = document.getElementById('subPlanSuccessStep');
+  if (v) v.style.display = 'none';
+  if (o) o.style.display = 'block';
+  if (s) s.style.display = 'none';
+  setTimeout(() => {
+    const p = document.getElementById('subOrderPhone');
+    if (p && !p.value) p.focus();
+  }, 100);
+}
+
+async function submitSubscriptionOrder() {
+  const nameInput = document.getElementById('subOrderName');
+  const phoneInput = document.getElementById('subOrderPhone');
+  const cityInput = document.getElementById('subOrderCity');
+  const notesInput = document.getElementById('subOrderNotes');
+  const errBox = document.getElementById('subOrderError');
+  const btn = document.getElementById('subOrderSubmitBtn');
+
+  const name = nameInput ? nameInput.value.trim() : '';
+  const phone = phoneInput ? phoneInput.value.trim() : '';
+  const city = cityInput ? cityInput.value.trim() : '';
+  const notes = notesInput ? notesInput.value.trim() : '';
+
+  if (!name) {
+    if (errBox) { errBox.innerText = 'Please enter your full name.'; errBox.style.display = 'block'; }
+    return;
+  }
+  if (!phone || phone.length < 8) {
+    if (errBox) { errBox.innerText = 'Please enter a valid WhatsApp or Mobile number.'; errBox.style.display = 'block'; }
+    return;
+  }
+
+  if (errBox) errBox.style.display = 'none';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Submitting Request...';
+  }
+
+  try {
+    const res = await fetch('/subscription/purchase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: name,
+        phone: phone,
+        city: city,
+        notes: notes,
+        payment_method: 'UPI / Direct Request'
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      const errMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Failed to submit order');
+      throw new Error(errMsg);
+    }
+
+    // Switch to step 3 (Success)
+    const v = document.getElementById('subPlanViewStep');
+    const o = document.getElementById('subPlanOrderStep');
+    const s = document.getElementById('subPlanSuccessStep');
+    if (v) v.style.display = 'none';
+    if (o) o.style.display = 'none';
+    if (s) s.style.display = 'block';
+
+    const pElem = document.getElementById('subSuccessPhone');
+    const nElem = document.getElementById('subSuccessName');
+    if (pElem) pElem.innerText = phone;
+    if (nElem) nElem.innerText = name;
+
+    toast('Subscription order submitted successfully! Sanjay will contact you shortly.', 'success');
+  } catch (err) {
+    if (errBox) {
+      errBox.innerText = err.message || 'An error occurred while submitting your order.';
+      errBox.style.display = 'block';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Submit Order & Request Activation (₹49) →';
+    }
+  }
 }
 
 async function addGroup() {

@@ -64,6 +64,14 @@
                 <div>
                   <div style="font-weight: 600; color: #fff;">{{ $user->name }}</div>
                   <div style="font-size: 0.78rem; color: var(--text-dim);">{{ $user->email }}</div>
+                  @if($user->phone)
+                    <div style="font-size: 0.75rem; color: #34d399; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                      <a href="tel:{{ $user->phone }}" style="color: #34d399; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        {{ $user->phone }}
+                      </a>
+                    </div>
+                  @endif
                 </div>
               </div>
             </td>
@@ -87,7 +95,7 @@
               @elseif($user->subscription_ends_at && $user->subscription_ends_at->isFuture())
                 <span class="badge badge-success">Paid Subscriber</span>
               @elseif($user->trial_ends_at && $user->trial_ends_at->isFuture())
-                <span class="badge badge-warning">Trial ({{ now()->diffInDays($user->trial_ends_at) }}d left)</span>
+                <span class="badge badge-warning">Trial ({{ (int) ceil(max(0, now()->diffInDays($user->trial_ends_at))) }}d left)</span>
               @else
                 <span class="badge badge-danger">Expired</span>
               @endif

@@ -29,6 +29,111 @@
   </div>
 </div>
 
+<!-- Customer Subscription Orders & Direct WhatsApp / Phone Contact -->
+<div class="card" style="padding: 0; overflow: hidden; margin-bottom: 28px;">
+  <div style="padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;">
+    <div>
+      <h3 style="font-size: 1.15rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Customer Subscription Orders & Contact Requests
+      </h3>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin: 4px 0 0 0;">
+        Direct customer leads who requested Pro access (₹49). Contact them via WhatsApp or call to confirm and click Activate.
+      </p>
+    </div>
+    @php
+      $pendingCount = $recentOrders->where('status', 'pending')->count();
+    @endphp
+    @if($pendingCount > 0)
+      <span class="badge badge-warning" style="font-size: 0.85rem; padding: 6px 12px;">{{ $pendingCount }} Pending Verification</span>
+    @endif
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Order # / Time</th>
+          <th>Customer Details</th>
+          <th>Mobile / WhatsApp</th>
+          <th>City / Market</th>
+          <th>Plan & Amount</th>
+          <th>Status</th>
+          <th style="text-align: right; padding-right: 24px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @forelse($recentOrders as $order)
+          @php
+            $cleanPhone = preg_replace('/[^0-9]/', '', $order->customer_phone);
+            if (strlen($cleanPhone) === 10) {
+                $waPhone = '91' . $cleanPhone;
+            } else {
+                $waPhone = $cleanPhone;
+            }
+          @endphp
+          <tr>
+            <td>
+              <div style="font-weight: 600; color: #fff;">#ORD-{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</div>
+              <div style="font-size: 0.78rem; color: var(--text-dim);">{{ $order->created_at->diffForHumans() }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #fff;">{{ $order->customer_name }}</div>
+              <div style="font-size: 0.78rem; color: var(--text-dim);">{{ $order->customer_email }}</div>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="tel:{{ $order->customer_phone }}" style="font-weight: 600; color: #60a5fa; text-decoration: none; font-size: 0.9rem;">
+                  {{ $order->customer_phone }}
+                </a>
+                <a href="https://wa.me/{{ $waPhone }}?text={{ urlencode('Hello ' . $order->customer_name . ', this is Sanjay regarding your Price Monitor Pro subscription request.') }}" target="_blank" rel="noopener noreferrer" class="badge badge-success" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 0.75rem;" title="Chat on WhatsApp">
+                  💬 WhatsApp
+                </a>
+              </div>
+            </td>
+            <td>
+              <span style="color: var(--text-muted); font-size: 0.85rem;">{{ $order->customer_city ?: '—' }}</span>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #34d399;">₹{{ number_format($order->amount, 2) }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">{{ $order->plan_duration_days }} Days Pro</div>
+            </td>
+            <td>
+              @if($order->status === 'active')
+                <span class="badge badge-success">Active Pro</span>
+              @elseif($order->status === 'pending')
+                <span class="badge badge-warning">Pending Payment</span>
+              @else
+                <span class="badge badge-muted">{{ ucfirst($order->status) }}</span>
+              @endif
+            </td>
+            <td style="text-align: right; padding-right: 24px;">
+              @if($order->status === 'pending')
+                <form action="{{ route('admin.subscriptions.orders.activate', $order->id) }}" method="POST" style="display: inline-block;">
+                  @csrf
+                  <button type="submit" class="btn btn-primary btn-sm" style="background: #10b981; border-color: #10b981; font-weight: 600;" onclick="return confirm('Activate 30-day Pro plan for {{ addslashes($order->customer_name) }} ({{ $order->customer_phone }})?')">
+                    ✓ Activate 30d Pro
+                  </button>
+                </form>
+              @else
+                <span style="font-size: 0.8rem; color: var(--text-dim);">
+                  Activated {{ $order->activated_at ? $order->activated_at->format('M d, H:i') : '' }}
+                </span>
+              @endif
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 32px;">
+              No subscription customer orders placed yet.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- Plan Configuration Box -->
 <div class="card">
   <div class="card-header">
@@ -108,6 +213,14 @@
             <td>
               <div style="font-weight: 600; color: #fff;">{{ $sub->name }}</div>
               <div style="font-size: 0.78rem; color: var(--text-dim);">{{ $sub->email }}</div>
+              @if($sub->phone)
+                <div style="font-size: 0.75rem; color: #34d399; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                  <a href="tel:{{ $sub->phone }}" style="color: #34d399; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    {{ $sub->phone }}
+                  </a>
+                </div>
+              @endif
             </td>
             <td>
               @if($sub->isAdmin())
