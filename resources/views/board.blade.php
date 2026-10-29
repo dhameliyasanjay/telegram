@@ -835,6 +835,9 @@ body.modal-open {
 @endif
 
 <!-- Subscription Plan Modal -->
+@php
+  $dynamicPlans = app(\App\Services\SettingService::class)->getSubscriptionPlans();
+@endphp
 <div class="modal-bg" id="subscriptionPlanModal" onclick="if(event.target===this)closeSubscriptionPlanModal()">
   <div class="modal" onclick="event.stopPropagation()" style="max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 16px; padding: 24px 22px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
     
@@ -888,7 +891,7 @@ body.modal-open {
       <div style="margin-bottom: 24px;">
         <div style="font-size: 0.82rem; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
           <span>Plan Benefits</span>
-          <span style="font-size: 1.15rem; font-weight: 700; color: #60a5fa;">From ₹49 <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 400;">/ Month</span></span>
+          <span style="font-size: 1.15rem; font-weight: 700; color: #60a5fa;">From ₹{{ number_format($dynamicPlans['1_month']['amount'] ?? 49) }} <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 400;">/ Month</span></span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -915,7 +918,7 @@ body.modal-open {
         <button class="btn btn-ghost" onclick="closeSubscriptionPlanModal()">Close</button>
         @if(!Auth::user()->isAdmin())
           <button class="btn btn-primary" onclick="showPlanCardsStep()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); font-weight: 600;">
-            {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription' : 'Subscribe Now (₹49 / 30d)' }} &rarr;
+            {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription' : 'Subscribe Now' }} &rarr;
           </button>
         @endif
       </div>
@@ -935,88 +938,50 @@ body.modal-open {
         <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Select your preferred plan duration to continue. You can renew or extend at any time.</p>
       </div>
 
-      <!-- 4 Cards Grid -->
+      {{-- 4 Cards Grid (Dynamically Configured from Settings) --}}
       <div class="plan-cards-grid">
-        
-        <!-- CARD 1: 1 Month -->
-        <div class="plan-select-card selected" id="planCard-1_month" onclick="selectPlan('1_month')">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span class="plan-card-badge plan-badge-default">Standard</span>
-            <div class="plan-card-radio">
-              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        @php
+          $badgeStyles = [
+            '1_month' => ['badgeClass' => 'plan-badge-default', 'priceColor' => '#60a5fa'],
+            '4_month' => ['badgeClass' => 'plan-badge-green',   'priceColor' => '#60a5fa'],
+            '6_month' => ['badgeClass' => 'plan-badge-popular', 'priceColor' => '#60a5fa'],
+            '1_year'  => ['badgeClass' => 'plan-badge-gold',    'priceColor' => '#fbbf24'],
+          ];
+        @endphp
+
+        @foreach($dynamicPlans as $key => $p)
+          @php
+            $style = $badgeStyles[$key] ?? ['badgeClass' => 'plan-badge-default', 'priceColor' => '#60a5fa'];
+            $monthlyRate = ($p['amount'] / max(1, $p['duration_days'])) * 30;
+          @endphp
+          <div class="plan-select-card {{ $key === '1_month' ? 'selected' : '' }}" id="planCard-{{ $key }}" onclick="selectPlan('{{ $key }}')">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span class="plan-card-badge {{ $style['badgeClass'] }}">{{ $p['badge'] ?: $p['name'] }}</span>
+              <div class="plan-card-radio">
+                <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">{{ $p['name'] }}</div>
+              <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">{{ $p['duration_days'] }} Days Validity</div>
+            </div>
+            <div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: {{ $style['priceColor'] }}; line-height: 1;">
+                ₹{{ number_format($p['amount']) }} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span>
+              </div>
+              <div style="font-size: 0.72rem; color: {{ $style['priceColor'] }}; margin-top: 4px;">
+                ₹{{ number_format($monthlyRate, 2) }} / month
+              </div>
             </div>
           </div>
-          <div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">1 Month</div>
-            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">30 Days Validity</div>
-          </div>
-          <div>
-            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹49 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
-            <div style="font-size: 0.72rem; color: #a1a1aa; margin-top: 4px;">₹49.00 / month</div>
-          </div>
-        </div>
-
-        <!-- CARD 2: 4 Months -->
-        <div class="plan-select-card" id="planCard-4_month" onclick="selectPlan('4_month')">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span class="plan-card-badge plan-badge-green">Save 9%</span>
-            <div class="plan-card-radio">
-              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-            </div>
-          </div>
-          <div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">4 Months</div>
-            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">120 Days Validity</div>
-          </div>
-          <div>
-            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹179 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
-            <div style="font-size: 0.72rem; color: #34d399; margin-top: 4px;">₹44.75 / month</div>
-          </div>
-        </div>
-
-        <!-- CARD 3: 6 Months -->
-        <div class="plan-select-card" id="planCard-6_month" onclick="selectPlan('6_month')">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span class="plan-card-badge plan-badge-popular">🔥 Popular</span>
-            <div class="plan-card-radio">
-              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-            </div>
-          </div>
-          <div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">6 Months</div>
-            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">180 Days Validity</div>
-          </div>
-          <div>
-            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹249 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
-            <div style="font-size: 0.72rem; color: #60a5fa; margin-top: 4px;">₹41.50 / month (Save 15%)</div>
-          </div>
-        </div>
-
-        <!-- CARD 4: 1 Year -->
-        <div class="plan-select-card" id="planCard-1_year" onclick="selectPlan('1_year')">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span class="plan-card-badge plan-badge-gold">⭐ Best Value</span>
-            <div class="plan-card-radio">
-              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-            </div>
-          </div>
-          <div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">1 Year</div>
-            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">365 Days Validity</div>
-          </div>
-          <div>
-            <div style="font-size: 1.35rem; font-weight: 800; color: #fbbf24; line-height: 1;">₹449 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
-            <div style="font-size: 0.72rem; color: #fbbf24; margin-top: 4px;">₹37.40 / month (Save 24%)</div>
-          </div>
-        </div>
-
+        @endforeach
       </div>
 
       <!-- Actions -->
       <div style="display: flex; justify-content: flex-end; gap: 10px;">
         <button type="button" class="btn btn-ghost" onclick="showPlanViewStep()">Back</button>
         <button type="button" id="planSelectContinueBtn" onclick="showPlanOrderStep()" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4);">
-          Continue with 1 Month (₹49) &rarr;
+          Continue with {{ $dynamicPlans['1_month']['name'] ?? '1 Month' }} (₹{{ number_format($dynamicPlans['1_month']['amount'] ?? 49) }}) &rarr;
         </button>
       </div>
     </div>
@@ -2117,36 +2082,15 @@ function closeAddModal() {
 // ── Subscription Plan Modal & Multi-Tier Plans ─────────────────────────────
 let selectedPlanKey = '1_month';
 
-const SUBSCRIPTION_PLANS = {
-  '1_month': {
-    name: '1 Month',
-    days: 30,
-    price: 49,
-    badge: 'Standard',
-    rateText: '₹49.00 / month'
-  },
-  '4_month': {
-    name: '4 Months',
-    days: 120,
-    price: 179,
-    badge: 'Save 9%',
-    rateText: '₹44.75 / month'
-  },
-  '6_month': {
-    name: '6 Months',
-    days: 180,
-    price: 249,
-    badge: '🔥 Popular',
-    rateText: '₹41.50 / month'
-  },
-  '1_year': {
-    name: '1 Year',
-    days: 365,
-    price: 449,
-    badge: '⭐ Best Value',
-    rateText: '₹37.40 / month'
-  }
-};
+const SUBSCRIPTION_PLANS = {!! json_encode(array_map(function($p) {
+    return [
+        'name'     => $p['name'],
+        'days'     => (int) $p['duration_days'],
+        'price'    => (float) $p['amount'],
+        'badge'    => $p['badge'],
+        'rateText' => '₹' . number_format(($p['amount'] / max(1, $p['duration_days'])) * 30, 2) . ' / month',
+    ];
+}, $dynamicPlans)) !!};
 
 function selectPlan(key) {
   if (!SUBSCRIPTION_PLANS[key]) return;

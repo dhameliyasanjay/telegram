@@ -66,19 +66,12 @@ class SubscriptionController extends Controller
         }
 
         $planKey = $validated['plan_key'] ?? '1_month';
-        $plan = self::PLANS[$planKey] ?? self::PLANS['1_month'];
+        $plans = $this->settingService->getSubscriptionPlans();
+        $plan = $plans[$planKey] ?? $plans['1_month'];
 
         $planPrice = (float) $plan['amount'];
         $durationDays = (int) $plan['duration_days'];
         $planName = $plan['name'];
-
-        // If 1_month and custom subscription_price was configured by admin, respect it
-        if ($planKey === '1_month') {
-            $configuredPrice = (float) $this->settingService->get('subscription_price', 0);
-            if ($configuredPrice > 0) {
-                $planPrice = $configuredPrice;
-            }
-        }
 
         $orderNotes = "Plan: {$planName} ({$durationDays} Days)";
         if (!empty($validated['notes'])) {

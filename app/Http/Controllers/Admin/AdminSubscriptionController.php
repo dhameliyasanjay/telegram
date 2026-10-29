@@ -79,11 +79,14 @@ class AdminSubscriptionController extends Controller
             ->limit(30)
             ->get();
 
+        $plans = $this->settingService->getSubscriptionPlans();
+
         $data = [
             'trialDays'        => $trialDays,
             'planPrice'        => $planPrice,
             'planDuration'     => $planDuration,
             'currencySymbol'   => $currencySymbol,
+            'plans'            => $plans,
             'activePaidCount'  => $activePaidCount,
             'activeTrialCount' => $activeTrialCount,
             'expiredCount'     => $expiredCount,
@@ -135,33 +138,70 @@ class AdminSubscriptionController extends Controller
     }
 
     /**
-     * Update default subscription plan pricing & trial duration.
+     * Update subscription plan pricing, multi-tier plans & trial duration.
      */
     public function updatePlan(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'trial_days'                 => ['required', 'integer', 'min:0', 'max:365'],
-            'subscription_price'         => ['required', 'numeric', 'min:0'],
-            'subscription_duration_days' => ['required', 'integer', 'min:1', 'max:365'],
             'currency_symbol'            => ['required', 'string', 'max:5'],
+            'subscription_price'         => ['nullable', 'numeric', 'min:0'],
+            'subscription_duration_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'plans'                      => ['nullable', 'array'],
+            'plans.*.name'               => ['required_with:plans', 'string', 'max:100'],
+            'plans.*.duration_days'      => ['required_with:plans', 'integer', 'min:1', 'max:3650'],
+            'plans.*.amount'             => ['required_with:plans', 'numeric', 'min:0'],
+            'plans.*.badge'              => ['nullable', 'string', 'max:100'],
         ]);
 
         $this->settingService->set('trial_days', $validated['trial_days'], 'integer', 'subscription', 'Free Trial Duration (Days)');
-        $this->settingService->set('subscription_price', $validated['subscription_price'], 'float', 'subscription', 'Subscription Plan Price');
-        $this->settingService->set('subscription_duration_days', $validated['subscription_duration_days'], 'integer', 'subscription', 'Subscription Duration (Days)');
         $this->settingService->set('currency_symbol', $validated['currency_symbol'], 'string', 'subscription', 'Currency Symbol');
+
+        $plans = $this->settingService->getSubscriptionPlans();
+
+        if (!empty($validated['plans'])) {
+            foreach ($validated['plans'] as $key => $planData) {
+                if (isset($plans[$key])) {
+                    $plans[$key]['name'] = trim((string) $planData['name']);
+                    $plans[$key]['duration_days'] = (int) $planData['duration_days'];
+                    $plans[$key]['amount'] = (float) $planData['amount'];
+                    $plans[$key]['badge'] = trim((string) ($planData['badge'] ?? ''));
+                }
+            }
+
+            $this->settingService->set('subscription_plans', $plans, 'json', 'subscription', 'Subscription Multi-Tier Plans');
+
+            if (isset($plans['1_month'])) {
+                $this->settingService->set('subscription_price', $plans['1_month']['amount'], 'float', 'subscription', 'Subscription Plan Price');
+                $this->settingService->set('subscription_duration_days', $plans['1_month']['duration_days'], 'integer', 'subscription', 'Subscription Duration (Days)');
+            }
+        } else {
+            // Legacy single price update
+            $price = (float) ($validated['subscription_price'] ?? 49.00);
+            $duration = (int) ($validated['subscription_duration_days'] ?? 30);
+            $this->settingService->set('subscription_price', $price, 'float', 'subscription', 'Subscription Plan Price');
+            $this->settingService->set('subscription_duration_days', $duration, 'integer', 'subscription', 'Subscription Duration (Days)');
+
+            $plans['1_month']['amount'] = $price;
+            $plans['1_month']['duration_days'] = $duration;
+            $this->settingService->set('subscription_plans', $plans, 'json', 'subscription', 'Subscription Multi-Tier Plans');
+        }
 
         AdminActivityLog::record(
             'subscription_plan_updated',
-            "Updated plan: Price {$validated['currency_symbol']}{$validated['subscription_price']} for {$validated['subscription_duration_days']} days, Free Trial: {$validated['trial_days']} days",
+            "Updated multi-tier plans & trial duration ({$validated['trial_days']} days trial)",
             null,
-            $validated
+            [
+                'trial_days'      => $validated['trial_days'],
+                'currency_symbol' => $validated['currency_symbol'],
+                'plans'           => $plans,
+            ]
         );
 
-        $msg = "Subscription plan configuration updated successfully.";
+        $msg = "Subscription plans and pricing configurations updated successfully.";
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => $msg]);
+            return response()->json(['success' => true, 'message' => $msg, 'plans' => $plans]);
         }
 
         return back()->with('success', $msg);

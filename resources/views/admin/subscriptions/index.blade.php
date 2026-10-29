@@ -134,47 +134,113 @@
   </div>
 </div>
 
-<!-- Plan Configuration Box -->
-<div class="card">
-  <div class="card-header">
-    <h3 class="card-title">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      Configure Master Subscription Plan
-    </h3>
+<!-- Multi-Tier Plan Configuration Box -->
+<div class="card" style="margin-bottom: 28px;">
+  <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Configure Subscription Plans & Discounts (4 Cards)
+      </h3>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin: 4px 0 0 0;">
+        Manage the prices, validity days, and discount/offer badges for all 4 plans shown on the User Dashboard.
+      </p>
+    </div>
   </div>
 
   <form action="{{ route('admin.subscriptions.plan') }}" method="POST">
     @csrf
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-      <div class="form-group">
+
+    <!-- General Settings: Free Trial & Currency -->
+    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+      <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Free Trial Period (Days)</label>
         <input type="number" name="trial_days" class="form-input" value="{{ $trialDays }}" min="0" max="365" required>
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Granted automatically upon registration.</div>
+        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Granted automatically upon new user registration.</div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Subscription Price</label>
-        <div style="position: relative;">
-          <input type="number" step="0.01" name="subscription_price" class="form-input" value="{{ $planPrice }}" min="0" required>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Monthly subscription fee.</div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Plan Duration (Days)</label>
-        <input type="number" name="subscription_duration_days" class="form-input" value="{{ $planDuration }}" min="1" max="365" required>
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Duration granted per subscription payment.</div>
-      </div>
-
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Currency Symbol</label>
         <input type="text" name="currency_symbol" class="form-input" value="{{ $currencySymbol }}" maxlength="5" required>
-        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Symbol displayed across UI.</div>
+        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Currency prefix displayed across the system (e.g. ₹ or $).</div>
       </div>
     </div>
 
-    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-      <button type="submit" class="btn btn-primary">Save Plan Settings</button>
+    <!-- The 4 Subscription Plan Cards Grid -->
+    <div style="margin-bottom: 12px;">
+      <div style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+        <span>Multi-Tier Plan Cards (1 Month, 4 Months, 6 Months, 1 Year)</span>
+        <span class="badge badge-primary" style="font-size: 0.7rem;">Live on User Dashboard</span>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-dim); margin: 0 0 16px 0;">
+        Updates here will instantly change the cards, prices, and discount badges shown when users click 'Subscribe Now'.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      @php
+        $planMeta = [
+          '1_month' => ['color' => '#60a5fa', 'bg' => 'rgba(59,130,246,0.06)', 'border' => 'rgba(59,130,246,0.25)', 'icon' => '1M'],
+          '4_month' => ['color' => '#34d399', 'bg' => 'rgba(16,185,129,0.06)', 'border' => 'rgba(16,185,129,0.25)', 'icon' => '4M'],
+          '6_month' => ['color' => '#a78bfa', 'bg' => 'rgba(139,92,246,0.06)', 'border' => 'rgba(139,92,246,0.25)', 'icon' => '6M'],
+          '1_year'  => ['color' => '#fbbf24', 'bg' => 'rgba(245,158,11,0.06)', 'border' => 'rgba(245,158,11,0.25)', 'icon' => '1Y'],
+        ];
+      @endphp
+
+      @foreach($plans as $key => $p)
+        @php
+          $meta = $planMeta[$key] ?? ['color' => '#3b82f6', 'bg' => 'rgba(255,255,255,0.03)', 'border' => 'var(--border)', 'icon' => '★'];
+          $monthlyRate = ($p['amount'] / max(1, $p['duration_days'])) * 30;
+        @endphp
+        <div style="background: {{ $meta['bg'] }}; border: 1px solid {{ $meta['border'] }}; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <span style="font-weight: 800; font-size: 0.82rem; color: {{ $meta['color'] }}; background: rgba(0,0,0,0.3); padding: 3px 10px; border-radius: 20px; border: 1px solid {{ $meta['border'] }};">
+                {{ $meta['icon'] }} Tier
+              </span>
+              <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">
+                ID: {{ $key }}
+              </span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label" style="font-size: 0.76rem;">Plan Title / Label</label>
+              <input type="text" name="plans[{{ $key }}][name]" class="form-input" value="{{ $p['name'] }}" required style="font-weight: 600;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.76rem;">Price ({{ $currencySymbol }})</label>
+                <input type="number" step="0.01" min="0" name="plans[{{ $key }}][amount]" class="form-input" value="{{ $p['amount'] }}" required style="font-weight: 700; color: #fff;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.76rem;">Validity (Days)</label>
+                <input type="number" min="1" max="3650" name="plans[{{ $key }}][duration_days]" class="form-input" value="{{ $p['duration_days'] }}" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label class="form-label" style="font-size: 0.76rem;">Discount / Offer Badge</label>
+              <input type="text" name="plans[{{ $key }}][badge]" class="form-input" value="{{ $p['badge'] }}" placeholder="e.g. Save 15% or Popular" style="font-size: 0.85rem;">
+              <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 3px;">Pill tag displayed on top of the card.</div>
+            </div>
+          </div>
+
+          <div style="padding-top: 12px; margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem;">
+            <span style="color: var(--text-dim);">Monthly Rate:</span>
+            <span style="font-weight: 700; color: {{ $meta['color'] }};">
+              {{ $currencySymbol }}{{ number_format($monthlyRate, 2) }} / mo
+            </span>
+          </div>
+        </div>
+      @endforeach
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+      <span style="font-size: 0.78rem; color: var(--text-dim);">Changes will immediately reflect on the user dashboard.</span>
+      <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+        Save All Plan Settings &rarr;
+      </button>
     </div>
   </form>
 </div>

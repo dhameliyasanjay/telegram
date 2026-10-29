@@ -314,6 +314,65 @@ class AdminTest extends TestCase
     }
 
     /**
+     * Test admin can update all 4 multi-tier plans with custom prices and discount badges.
+     */
+    public function test_admin_can_update_multi_tier_subscription_plans(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+
+        $response = $this->actingAs($admin)->post('/admin/subscriptions/plan', [
+            'trial_days'      => 30,
+            'currency_symbol' => '₹',
+            'plans'           => [
+                '1_month' => [
+                    'name'          => '1 Month Starter',
+                    'duration_days' => 30,
+                    'amount'        => 59.00,
+                    'badge'         => 'Starter',
+                ],
+                '4_month' => [
+                    'name'          => '4 Months Special',
+                    'duration_days' => 120,
+                    'amount'        => 199.00,
+                    'badge'         => 'Special 15% Off',
+                ],
+                '6_month' => [
+                    'name'          => '6 Months Super Saver',
+                    'duration_days' => 180,
+                    'amount'        => 279.00,
+                    'badge'         => '🔥 Super Deal',
+                ],
+                '1_year' => [
+                    'name'          => '1 Year VIP Pass',
+                    'duration_days' => 365,
+                    'amount'        => 499.00,
+                    'badge'         => '⭐ VIP 30% Off',
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect();
+
+        /** @var SettingService $settingService */
+        $settingService = app(SettingService::class);
+        $plans = $settingService->getSubscriptionPlans();
+
+        $this->assertEquals('1 Month Starter', $plans['1_month']['name']);
+        $this->assertEquals(59.00, $plans['1_month']['amount']);
+        $this->assertEquals('Special 15% Off', $plans['4_month']['badge']);
+        $this->assertEquals(279.00, $plans['6_month']['amount']);
+        $this->assertEquals('1 Year VIP Pass', $plans['1_year']['name']);
+        $this->assertEquals(499.00, $plans['1_year']['amount']);
+
+        // Check index view displays the configured plans
+        $indexResponse = $this->actingAs($admin)->get('/admin/subscriptions');
+        $indexResponse->assertOk()
+            ->assertSee('1 Month Starter')
+            ->assertSee('Special 15% Off')
+            ->assertSee('1 Year VIP Pass');
+    }
+
+    /**
      * Test admin activity logs redact sensitive keys.
      */
     public function test_admin_activity_log_redacts_sensitive_keys(): void

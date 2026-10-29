@@ -9,6 +9,68 @@ class SettingService
 {
     private const CACHE_PREFIX = 'app_setting_';
 
+    public const DEFAULT_PLANS = [
+        '1_month' => [
+            'name'          => '1 Month',
+            'duration_days' => 30,
+            'amount'        => 49.00,
+            'badge'         => 'Standard',
+            'description'   => '30 Days Validity',
+        ],
+        '4_month' => [
+            'name'          => '4 Months',
+            'duration_days' => 120,
+            'amount'        => 179.00,
+            'badge'         => 'Save 9%',
+            'description'   => '120 Days Validity',
+        ],
+        '6_month' => [
+            'name'          => '6 Months',
+            'duration_days' => 180,
+            'amount'        => 249.00,
+            'badge'         => '🔥 Most Popular',
+            'description'   => '180 Days Validity',
+        ],
+        '1_year' => [
+            'name'          => '1 Year',
+            'duration_days' => 365,
+            'amount'        => 449.00,
+            'badge'         => '⭐ Best Value',
+            'description'   => '365 Days Validity',
+        ],
+    ];
+
+    /**
+     * Get configured subscription plans, falling back to defaults.
+     */
+    public function getSubscriptionPlans(): array
+    {
+        $saved = $this->get('subscription_plans');
+        $plans = self::DEFAULT_PLANS;
+
+        if (is_array($saved) && !empty($saved)) {
+            foreach ($plans as $k => $def) {
+                if (isset($saved[$k]) && is_array($saved[$k])) {
+                    $plans[$k] = [
+                        'name'          => (string) ($saved[$k]['name'] ?? $def['name']),
+                        'duration_days' => (int) ($saved[$k]['duration_days'] ?? $def['duration_days']),
+                        'amount'        => (float) ($saved[$k]['amount'] ?? $def['amount']),
+                        'badge'         => (string) ($saved[$k]['badge'] ?? $def['badge']),
+                        'description'   => (string) ($saved[$k]['description'] ?? $def['description']),
+                    ];
+                }
+            }
+        }
+
+        // If a custom 1_month price was set via subscription_price, respect it if subscription_plans was not explicitly saved
+        $customPrice = (float) $this->get('subscription_price', 0);
+        if ($customPrice > 0 && empty($saved)) {
+            $plans['1_month']['amount'] = $customPrice;
+        }
+
+        return $plans;
+    }
+
     /**
      * Get a setting by key, with default fallback.
      */
