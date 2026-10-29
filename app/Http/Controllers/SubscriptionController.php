@@ -11,6 +11,33 @@ use Illuminate\Support\Facades\Auth;
 
 class SubscriptionController extends Controller
 {
+    public const PLANS = [
+        '1_month' => [
+            'name'          => '1 Month',
+            'duration_days' => 30,
+            'amount'        => 49.00,
+            'badge'         => 'Standard',
+        ],
+        '4_month' => [
+            'name'          => '4 Months',
+            'duration_days' => 120,
+            'amount'        => 179.00,
+            'badge'         => 'Save 9%',
+        ],
+        '6_month' => [
+            'name'          => '6 Months',
+            'duration_days' => 180,
+            'amount'        => 249.00,
+            'badge'         => 'Most Popular',
+        ],
+        '1_year' => [
+            'name'          => '1 Year',
+            'duration_days' => 365,
+            'amount'        => 449.00,
+            'badge'         => 'Best Value',
+        ],
+    ];
+
     public function __construct(
         private readonly SettingService $settingService,
     ) {}
@@ -21,6 +48,7 @@ class SubscriptionController extends Controller
     public function purchase(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'plan_key'       => ['nullable', 'string', 'in:1_month,4_month,6_month,1_year'],
             'name'           => ['required', 'string', 'max:255'],
             'phone'          => ['required', 'string', 'min:8', 'max:25'],
             'city'           => ['nullable', 'string', 'max:100'],
@@ -37,8 +65,25 @@ class SubscriptionController extends Controller
             $user->save();
         }
 
-        $planPrice = (float) $this->settingService->get('subscription_price', 49.00);
-        $durationDays = (int) $this->settingService->get('subscription_duration_days', 30);
+        $planKey = $validated['plan_key'] ?? '1_month';
+        $plan = self::PLANS[$planKey] ?? self::PLANS['1_month'];
+
+        $planPrice = (float) $plan['amount'];
+        $durationDays = (int) $plan['duration_days'];
+        $planName = $plan['name'];
+
+        // If 1_month and custom subscription_price was configured by admin, respect it
+        if ($planKey === '1_month') {
+            $configuredPrice = (float) $this->settingService->get('subscription_price', 0);
+            if ($configuredPrice > 0) {
+                $planPrice = $configuredPrice;
+            }
+        }
+
+        $orderNotes = "Plan: {$planName} ({$durationDays} Days)";
+        if (!empty($validated['notes'])) {
+            $orderNotes .= " | " . $validated['notes'];
+        }
 
         $order = SubscriptionOrder::create([
             'user_id'            => $user->id,
@@ -48,27 +93,35 @@ class SubscriptionController extends Controller
             'customer_city'      => $validated['city'] ?? null,
             'amount'             => $planPrice,
             'plan_duration_days' => $durationDays,
-            'payment_method'     => $validated['payment_method'] ?? 'UPI / Direct Request',
+            'payment_method'     => $validated['payment_method'] ?? 'Razorpay (Pending Integration) / Direct Request',
             'status'             => 'pending',
-            'notes'              => $validated['notes'] ?? null,
+            'notes'              => $orderNotes,
         ]);
 
         AdminActivityLog::record(
             'subscription_order_placed',
-            "Customer [{$order->customer_name}] submitted purchase request for ₹{$order->amount} (Phone: {$order->customer_phone})",
+            "Customer [{$order->customer_name}] submitted purchase request for {$planName} — ₹{$order->amount} (Phone: {$order->customer_phone})",
             $order,
             [
+                'plan'   => $planName,
                 'phone'  => $order->customer_phone,
                 'email'  => $order->customer_email,
                 'amount' => $order->amount,
+                'days'   => $order->plan_duration_days,
                 'city'   => $order->customer_city,
             ]
         );
 
         return response()->json([
             'success' => true,
-            'message' => "Thank you, {$order->customer_name}! Your subscription order has been placed. We will contact you at {$order->customer_phone} to verify and activate your 30-Day Pro Plan.",
+            'message' => "Thank you, {$order->customer_name}! Your subscription request for {$planName} (₹{$order->amount}) has been placed. We will verify and activate your plan.",
             'order'   => $order,
+            'plan'    => [
+                'key'    => $planKey,
+                'name'   => $planName,
+                'days'   => $durationDays,
+                'amount' => $planPrice,
+            ],
         ]);
     }
 }

@@ -44,6 +44,66 @@ class SubscriptionOrderTest extends TestCase
         $this->assertSame('9825199999', $user->phone);
     }
 
+    public function test_user_can_select_and_submit_multi_tier_subscription_plans(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+
+        // Test 6 Months plan (180 days, ₹249)
+        $response6m = $this->actingAs($user)->postJson(route('subscription.purchase'), [
+            'plan_key'       => '6_month',
+            'name'           => 'Pravin Shah',
+            'phone'          => '9825001122',
+            'city'           => 'Ahmedabad Cloth Market',
+            'notes'          => 'Annual renewal consideration',
+        ]);
+
+        $response6m->assertOk()
+            ->assertJson([
+                'success' => true,
+                'plan'    => [
+                    'key'    => '6_month',
+                    'name'   => '6 Months',
+                    'days'   => 180,
+                    'amount' => 249.00,
+                ],
+            ]);
+
+        $this->assertDatabaseHas('subscription_orders', [
+            'user_id'            => $user->id,
+            'customer_name'      => 'Pravin Shah',
+            'amount'             => 249.00,
+            'plan_duration_days' => 180,
+            'status'             => 'pending',
+        ]);
+
+        // Test 1 Year plan (365 days, ₹449)
+        $response1y = $this->actingAs($user)->postJson(route('subscription.purchase'), [
+            'plan_key'       => '1_year',
+            'name'           => 'Kiran Patel',
+            'phone'          => '9898001122',
+            'city'           => 'Surat',
+        ]);
+
+        $response1y->assertOk()
+            ->assertJson([
+                'success' => true,
+                'plan'    => [
+                    'key'    => '1_year',
+                    'name'   => '1 Year',
+                    'days'   => 365,
+                    'amount' => 449.00,
+                ],
+            ]);
+
+        $this->assertDatabaseHas('subscription_orders', [
+            'user_id'            => $user->id,
+            'customer_name'      => 'Kiran Patel',
+            'amount'             => 449.00,
+            'plan_duration_days' => 365,
+            'status'             => 'pending',
+        ]);
+    }
+
     public function test_admin_can_view_and_activate_subscription_order(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

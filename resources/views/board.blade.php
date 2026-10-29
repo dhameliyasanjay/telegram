@@ -428,6 +428,90 @@ body.modal-open {
   overscroll-behavior: none !important;
 }
 
+/* Subscription Plan Cards */
+.plan-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+@media (max-width: 520px) {
+  .plan-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.plan-select-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.plan-select-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+.plan-select-card.selected {
+  border-color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  box-shadow: 0 0 0 1px #3b82f6, 0 8px 20px rgba(59, 130, 246, 0.2) !important;
+}
+.plan-card-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.plan-select-card.selected .plan-card-radio {
+  border-color: #3b82f6;
+  background: #3b82f6;
+}
+.plan-card-radio svg {
+  display: none;
+}
+.plan-select-card.selected .plan-card-radio svg {
+  display: block;
+}
+.plan-card-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.plan-badge-default {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d4d4d8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.plan-badge-green {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.plan-badge-popular {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.plan-badge-gold {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
 /* Toasts */
 .toast-wrap { position: fixed; bottom: 32px; right: 32px; display: flex; flex-direction: column; gap: 12px; z-index: 500; }
 .toast { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px; font-size: 14px; font-weight: 500; box-shadow: 0 12px 40px rgba(0,0,0,0.4); animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--accent); }
@@ -752,7 +836,7 @@ body.modal-open {
 
 <!-- Subscription Plan Modal -->
 <div class="modal-bg" id="subscriptionPlanModal" onclick="if(event.target===this)closeSubscriptionPlanModal()">
-  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 16px; padding: 24px 22px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 16px; padding: 24px 22px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
     
     <!-- STEP 1: Overview & Status -->
     <div id="subPlanViewStep">
@@ -804,7 +888,7 @@ body.modal-open {
       <div style="margin-bottom: 24px;">
         <div style="font-size: 0.82rem; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
           <span>Plan Benefits</span>
-          <span style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">₹49 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
+          <span style="font-size: 1.15rem; font-weight: 700; color: #60a5fa;">From ₹49 <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 400;">/ Month</span></span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -830,30 +914,137 @@ body.modal-open {
       <div style="display: flex; justify-content: flex-end; gap: 12px;">
         <button class="btn btn-ghost" onclick="closeSubscriptionPlanModal()">Close</button>
         @if(!Auth::user()->isAdmin())
-          <button class="btn btn-primary" onclick="showPlanOrderStep()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); font-weight: 600;">
-            {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription (₹49)' : 'Subscribe Now (₹49 / 30d)' }} &rarr;
+          <button class="btn btn-primary" onclick="showPlanCardsStep()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); font-weight: 600;">
+            {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription' : 'Subscribe Now (₹49 / 30d)' }} &rarr;
           </button>
         @endif
       </div>
     </div>
 
-    <!-- STEP 2: Checkout / Purchase Form -->
-    <div id="subPlanOrderStep" style="display: none;">
+    <!-- STEP 2: Choose Subscription Plan (4 Cards: 1 Month, 4 Months, 6 Months, 1 Year) -->
+    <div id="subPlanCardsStep" style="display: none;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <button type="button" onclick="showPlanViewStep()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; padding: 0;">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg> Back to Plan
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg> Back
+        </button>
+        <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <div style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 4px;">Choose Subscription Plan</div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Select your preferred plan duration to continue. You can renew or extend at any time.</p>
+      </div>
+
+      <!-- 4 Cards Grid -->
+      <div class="plan-cards-grid">
+        
+        <!-- CARD 1: 1 Month -->
+        <div class="plan-select-card selected" id="planCard-1_month" onclick="selectPlan('1_month')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="plan-card-badge plan-badge-default">Standard</span>
+            <div class="plan-card-radio">
+              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">1 Month</div>
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">30 Days Validity</div>
+          </div>
+          <div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹49 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
+            <div style="font-size: 0.72rem; color: #a1a1aa; margin-top: 4px;">₹49.00 / month</div>
+          </div>
+        </div>
+
+        <!-- CARD 2: 4 Months -->
+        <div class="plan-select-card" id="planCard-4_month" onclick="selectPlan('4_month')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="plan-card-badge plan-badge-green">Save 9%</span>
+            <div class="plan-card-radio">
+              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">4 Months</div>
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">120 Days Validity</div>
+          </div>
+          <div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹179 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
+            <div style="font-size: 0.72rem; color: #34d399; margin-top: 4px;">₹44.75 / month</div>
+          </div>
+        </div>
+
+        <!-- CARD 3: 6 Months -->
+        <div class="plan-select-card" id="planCard-6_month" onclick="selectPlan('6_month')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="plan-card-badge plan-badge-popular">🔥 Popular</span>
+            <div class="plan-card-radio">
+              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">6 Months</div>
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">180 Days Validity</div>
+          </div>
+          <div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #60a5fa; line-height: 1;">₹249 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
+            <div style="font-size: 0.72rem; color: #60a5fa; margin-top: 4px;">₹41.50 / month (Save 15%)</div>
+          </div>
+        </div>
+
+        <!-- CARD 4: 1 Year -->
+        <div class="plan-select-card" id="planCard-1_year" onclick="selectPlan('1_year')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="plan-card-badge plan-badge-gold">⭐ Best Value</span>
+            <div class="plan-card-radio">
+              <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px;">1 Year</div>
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-bottom: 8px;">365 Days Validity</div>
+          </div>
+          <div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #fbbf24; line-height: 1;">₹449 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 400;">total</span></div>
+            <div style="font-size: 0.72rem; color: #fbbf24; margin-top: 4px;">₹37.40 / month (Save 24%)</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-ghost" onclick="showPlanViewStep()">Back</button>
+        <button type="button" id="planSelectContinueBtn" onclick="showPlanOrderStep()" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4);">
+          Continue with 1 Month (₹49) &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Checkout / Purchase Form -->
+    <div id="subPlanOrderStep" style="display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <button type="button" onclick="showPlanCardsStep()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; padding: 0;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg> Back to Plans
         </button>
         <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
       </div>
 
       <div style="margin-bottom: 12px;">
-        <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;">Activate Pro Plan (₹49)</div>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Please provide your contact details so our administrator can verify payment and activate your 30-day Pro plan.</p>
+        <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;" id="subOrderTitleText">Activate 1 Month Pro Plan (₹49)</div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Please provide your contact details to proceed with subscription activation.</p>
       </div>
 
+      <!-- Selected Plan Summary Box -->
       <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
-        <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Plan: Price Monitor Pro</span>
-        <span style="font-size: 1.05rem; color: #60a5fa; font-weight: 700;">₹49 <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">/ 30 Days</span></span>
+        <div>
+          <span style="font-size: 0.85rem; color: #fff; font-weight: 600;" id="subOrderSelectedPlanName">Plan: 1 Month (30 Days)</span>
+          <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">Telegram Price Monitor Full Access</div>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 1.15rem; color: #60a5fa; font-weight: 700;" id="subOrderSelectedPlanPrice">₹49</span>
+          <div><a href="javascript:void(0)" onclick="showPlanCardsStep()" style="color:#93c5fd; font-size:0.72rem; text-decoration:underline;">Change Plan</a></div>
+        </div>
       </div>
 
       <form id="subOrderForm" onsubmit="event.preventDefault(); submitSubscriptionOrder();">
@@ -883,22 +1074,25 @@ body.modal-open {
         <div id="subOrderError" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 12px;"></div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 2px;">
-          <button type="button" class="btn btn-ghost" onclick="showPlanViewStep()">Back</button>
+          <button type="button" class="btn btn-ghost" onclick="showPlanCardsStep()">Back</button>
           <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
-            Submit Order & Request Activation (₹49) &rarr;
+            <span id="subOrderSubmitBtnText">Submit Order & Request Activation (₹49)</span> &rarr;
           </button>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 8px;">
+          💳 Razorpay payment gateway integration will be added here next.
         </div>
       </form>
     </div>
 
-    <!-- STEP 3: Order Placed Success Confirmation -->
+    <!-- STEP 4: Order Placed Success Confirmation -->
     <div id="subPlanSuccessStep" style="display: none; text-align: center; padding: 16px 8px;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 2px solid #10b981; color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
         <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
       </div>
       <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Subscription Request Placed!</h3>
       <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
-        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your request for the <strong>30-Day Pro Plan (₹49)</strong> has been registered.
+        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your request for <strong id="subSuccessDuration" style="color:#60a5fa;">1 Month (30 Days)</strong> has been registered.
       </p>
 
       <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
@@ -907,12 +1101,12 @@ body.modal-open {
           <strong id="subSuccessPhone" style="color: #34d399;">—</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span>Amount:</span>
-          <strong style="color: #fff;">₹49.00</strong>
+          <span>Plan Amount:</span>
+          <strong id="subSuccessAmount" style="color: #fff;">₹49.00</strong>
         </div>
         <div style="display: flex; justify-content: space-between;">
           <span>Status:</span>
-          <span style="color: #fbbf24; font-weight: 600;">Pending Verification</span>
+          <span style="color: #fbbf24; font-weight: 600;">Pending Verification (Ready for Razorpay)</span>
         </div>
       </div>
 
@@ -961,8 +1155,8 @@ body.modal-open {
     </div>
 
     <!-- Actions -->
-    <button class="btn btn-primary" onclick="closeTrialExpiredModal(); openSubscriptionPlanModal();" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; border-radius: 10px; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); cursor: pointer; margin-bottom: 10px;">
-      Upgrade to Pro Plan — ₹49 &rarr;
+    <button class="btn btn-primary" onclick="closeTrialExpiredModal(); openSubscriptionPlanModal(); showPlanCardsStep();" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; border-radius: 10px; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); cursor: pointer; margin-bottom: 10px;">
+      Choose Subscription Plan &rarr;
     </button>
     <button class="btn btn-ghost" onclick="closeTrialExpiredModal()" style="width: 100%; color: var(--text-muted); font-size: 0.85rem; border: none; background: none; cursor: pointer; padding: 8px;">
       Continue Browsing (Blurred Preview)
@@ -1685,8 +1879,8 @@ function renderCompareDrawer(p) {
           Your free trial has ended. Subscribe for ₹49 to unlock direct Telegram supplier channels, unblurred prices, and verified supplier contact details.
         </div>
       </div>
-      <button onclick="openSubscriptionPlanModal()" class="btn btn-primary" style="white-space: nowrap; padding: 10px 18px; font-size: 0.88rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
-        Unlock for ₹49 &rarr;
+      <button onclick="openSubscriptionPlanModal(); showPlanCardsStep();" class="btn btn-primary" style="white-space: nowrap; padding: 10px 18px; font-size: 0.88rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+        Choose Plan &rarr;
       </button>
     </div>`;
 
@@ -1787,7 +1981,7 @@ function renderCompareDrawer(p) {
             Price History
           </button>
           ${tgBtn}
-          ${!USER_HAS_ACTIVE_ACCESS ? `<button onclick="openSubscriptionPlanModal()" class="btn btn-secondary btn-sm" style="font-size:11px; color:#60a5fa; border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.1); padding:5px 10px; border-radius:6px; cursor:pointer;">Unlock Plan ₹49</button>` : ''}
+          ${!USER_HAS_ACTIVE_ACCESS ? `<button onclick="openSubscriptionPlanModal(); showPlanCardsStep();" class="btn btn-secondary btn-sm" style="font-size:11px; color:#60a5fa; border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.1); padding:5px 10px; border-radius:6px; cursor:pointer;">Choose Plan</button>` : ''}
         </div>
       </div>
 
@@ -1920,7 +2114,59 @@ function closeAddModal() {
   }
 }
 
-// ── Subscription Plan Modal ────────────────────────────────────────────────
+// ── Subscription Plan Modal & Multi-Tier Plans ─────────────────────────────
+let selectedPlanKey = '1_month';
+
+const SUBSCRIPTION_PLANS = {
+  '1_month': {
+    name: '1 Month',
+    days: 30,
+    price: 49,
+    badge: 'Standard',
+    rateText: '₹49.00 / month'
+  },
+  '4_month': {
+    name: '4 Months',
+    days: 120,
+    price: 179,
+    badge: 'Save 9%',
+    rateText: '₹44.75 / month'
+  },
+  '6_month': {
+    name: '6 Months',
+    days: 180,
+    price: 249,
+    badge: '🔥 Popular',
+    rateText: '₹41.50 / month'
+  },
+  '1_year': {
+    name: '1 Year',
+    days: 365,
+    price: 449,
+    badge: '⭐ Best Value',
+    rateText: '₹37.40 / month'
+  }
+};
+
+function selectPlan(key) {
+  if (!SUBSCRIPTION_PLANS[key]) return;
+  selectedPlanKey = key;
+  const plan = SUBSCRIPTION_PLANS[key];
+
+  Object.keys(SUBSCRIPTION_PLANS).forEach(k => {
+    const card = document.getElementById(`planCard-${k}`);
+    if (card) {
+      if (k === key) card.classList.add('selected');
+      else card.classList.remove('selected');
+    }
+  });
+
+  const btn = document.getElementById('planSelectContinueBtn');
+  if (btn) {
+    btn.innerHTML = `Continue with ${plan.name} (₹${plan.price}) &rarr;`;
+  }
+}
+
 function openSubscriptionPlanModal() {
   const m = document.getElementById('subscriptionPlanModal');
   if (m) {
@@ -1945,22 +2191,52 @@ function closeSubscriptionPlanModal() {
 
 function showPlanViewStep() {
   const v = document.getElementById('subPlanViewStep');
+  const c = document.getElementById('subPlanCardsStep');
   const o = document.getElementById('subPlanOrderStep');
   const s = document.getElementById('subPlanSuccessStep');
   if (v) v.style.display = 'block';
+  if (c) c.style.display = 'none';
   if (o) o.style.display = 'none';
   if (s) s.style.display = 'none';
   const box = document.querySelector('#subscriptionPlanModal .modal');
   if (box) box.scrollTop = 0;
 }
 
-function showPlanOrderStep() {
+function showPlanCardsStep() {
   const v = document.getElementById('subPlanViewStep');
+  const c = document.getElementById('subPlanCardsStep');
   const o = document.getElementById('subPlanOrderStep');
   const s = document.getElementById('subPlanSuccessStep');
   if (v) v.style.display = 'none';
+  if (c) c.style.display = 'block';
+  if (o) o.style.display = 'none';
+  if (s) s.style.display = 'none';
+  const box = document.querySelector('#subscriptionPlanModal .modal');
+  if (box) box.scrollTop = 0;
+  selectPlan(selectedPlanKey);
+}
+
+function showPlanOrderStep() {
+  const plan = SUBSCRIPTION_PLANS[selectedPlanKey] || SUBSCRIPTION_PLANS['1_month'];
+  const v = document.getElementById('subPlanViewStep');
+  const c = document.getElementById('subPlanCardsStep');
+  const o = document.getElementById('subPlanOrderStep');
+  const s = document.getElementById('subPlanSuccessStep');
+  if (v) v.style.display = 'none';
+  if (c) c.style.display = 'none';
   if (o) o.style.display = 'block';
   if (s) s.style.display = 'none';
+
+  const planNameEl = document.getElementById('subOrderSelectedPlanName');
+  const planPriceEl = document.getElementById('subOrderSelectedPlanPrice');
+  const planTitleEl = document.getElementById('subOrderTitleText');
+  const submitBtnTextEl = document.getElementById('subOrderSubmitBtnText');
+
+  if (planNameEl) planNameEl.innerText = `Plan: Price Monitor Pro — ${plan.name} (${plan.days} Days)`;
+  if (planPriceEl) planPriceEl.innerText = `₹${plan.price}`;
+  if (planTitleEl) planTitleEl.innerText = `Activate ${plan.name} Pro Plan (₹${plan.price})`;
+  if (submitBtnTextEl) submitBtnTextEl.innerText = `Submit Order & Request Activation (₹${plan.price})`;
+
   const box = document.querySelector('#subscriptionPlanModal .modal');
   if (box) box.scrollTop = 0;
   setTimeout(() => {
@@ -1991,10 +2267,12 @@ async function submitSubscriptionOrder() {
     return;
   }
 
+  const plan = SUBSCRIPTION_PLANS[selectedPlanKey] || SUBSCRIPTION_PLANS['1_month'];
+
   if (errBox) errBox.style.display = 'none';
   if (btn) {
     btn.disabled = true;
-    btn.innerText = 'Submitting Request...';
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;"></span> Placing order...';
   }
 
   try {
@@ -2006,11 +2284,12 @@ async function submitSubscriptionOrder() {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
+        plan_key: selectedPlanKey,
         name: name,
         phone: phone,
         city: city,
         notes: notes,
-        payment_method: 'UPI / Direct Request'
+        payment_method: 'Razorpay (Pending Integration) / Direct Request'
       })
     });
 
@@ -2020,20 +2299,26 @@ async function submitSubscriptionOrder() {
       throw new Error(errMsg);
     }
 
-    // Switch to step 3 (Success)
+    // Switch to step 4 (Success)
     const v = document.getElementById('subPlanViewStep');
+    const c = document.getElementById('subPlanCardsStep');
     const o = document.getElementById('subPlanOrderStep');
     const s = document.getElementById('subPlanSuccessStep');
     if (v) v.style.display = 'none';
+    if (c) c.style.display = 'none';
     if (o) o.style.display = 'none';
     if (s) s.style.display = 'block';
 
     const pElem = document.getElementById('subSuccessPhone');
     const nElem = document.getElementById('subSuccessName');
+    const aElem = document.getElementById('subSuccessAmount');
+    const dElem = document.getElementById('subSuccessDuration');
     if (pElem) pElem.innerText = phone;
     if (nElem) nElem.innerText = name;
+    if (aElem) aElem.innerText = `₹${plan.price}.00`;
+    if (dElem) dElem.innerText = `${plan.name} (${plan.days} Days)`;
 
-    toast('Subscription order submitted successfully! Sanjay will contact you shortly.', 'success');
+    toast(`Subscription order for ${plan.name} placed successfully!`, 'success');
   } catch (err) {
     if (errBox) {
       errBox.innerText = err.message || 'An error occurred while submitting your order.';
@@ -2042,7 +2327,7 @@ async function submitSubscriptionOrder() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerText = 'Submit Order & Request Activation (₹49) →';
+      btn.innerHTML = `<span id="subOrderSubmitBtnText">Submit Order & Request Activation (₹${plan.price})</span> &rarr;`;
     }
   }
 }
