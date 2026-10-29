@@ -533,6 +533,19 @@ body {
             <span style="font-weight: 600;">Admin Panel</span>
           </a>
         @endif
+        <a href="javascript:void(0)" onclick="openSubscriptionPlanModal()" class="nav-item" style="margin-bottom: 4px;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">My Subscription</span>
+          @if(Auth::check() && Auth::user()->isAdmin())
+            <span style="font-size:0.65rem; background:rgba(139,92,246,0.15); color:#a78bfa; border:1px solid rgba(139,92,246,0.3); padding:1px 6px; border-radius:4px; margin-left:auto;">Admin</span>
+          @elseif(Auth::check() && Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
+            <span style="font-size:0.65rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:4px; margin-left:auto;">Pro</span>
+          @elseif(Auth::check() && Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
+            <span style="font-size:0.65rem; background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); padding:1px 6px; border-radius:4px; margin-left:auto;">Trial</span>
+          @else
+            <span style="font-size:0.65rem; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:1px 6px; border-radius:4px; margin-left:auto;">Expired</span>
+          @endif
+        </a>
         <a href="{{ route('profile') }}" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Auth::user()->name ?? 'Settings' }}</span>
@@ -569,14 +582,33 @@ body {
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-          Sync All History
-        </button>
-        <button class="btn btn-primary" onclick="openAddModal()" style="background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          Add Group
-        </button>
+        @if(Auth::check() && Auth::user()->isAdmin())
+          <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Sync All History
+          </button>
+          <button class="btn btn-primary" onclick="openAddModal()" style="background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Add Group
+          </button>
+        @else
+          <!-- Regular User Subscription / Trial Status Badge -->
+          <div class="user-plan-pill" onclick="openSubscriptionPlanModal()" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); padding: 7px 14px; border-radius: 10px; font-size: 0.84rem; transition: all 0.2s;" title="Click to view subscription details">
+            @if(Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+              <span style="color: #fff; font-weight: 600;">Pro Plan</span>
+              <span style="color: #a1a1aa; font-size: 0.75rem;">(Until {{ Auth::user()->subscription_ends_at->format('M d') }})</span>
+            @elseif(Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+              <span style="color: #fbbf24; font-weight: 600;">Free Trial</span>
+              <span style="color: #a1a1aa; font-size: 0.75rem;">({{ max(0, now()->diffInDays(Auth::user()->trial_ends_at)) }} days left)</span>
+            @else
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+              <span style="color: #f87171; font-weight: 600;">Trial Expired</span>
+              <span style="color: #60a5fa; font-weight: 600; text-decoration: underline; margin-left: 4px;">Subscribe ₹49</span>
+            @endif
+          </div>
+        @endif
       </div>
     </header>
 
@@ -609,10 +641,12 @@ body {
       <select class="group-select" id="groupSelect" onchange="onGroupChange(this.value)">
         <option value="">All Groups</option>
       </select>
+      @if(Auth::check() && Auth::user()->isAdmin())
       <button class="group-sync-btn" id="groupSyncBtn" onclick="syncSelectedGroup()" title="Sync selected group">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         Sync Group
       </button>
+      @endif
     </div>
 
     <!-- Toolbar -->
@@ -670,7 +704,8 @@ body {
   </div> <!-- /.main-wrapper -->
 </div> <!-- /.app-layout -->
 
-<!-- Add Group Modal -->
+@if(Auth::check() && Auth::user()->isAdmin())
+{{-- Add Group Modal (Admin Only) --}}
 <div class="modal-bg" id="addModal" onclick="e=>e.target===this&&closeAddModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <h2>Add Telegram Group</h2>
@@ -680,6 +715,92 @@ body {
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
       <button class="btn btn-primary" id="addBtn" onclick="addGroup()">Connect Group</button>
+    </div>
+  </div>
+</div>
+@endif
+
+<!-- Subscription Plan Modal -->
+<div class="modal-bg" id="subscriptionPlanModal" onclick="if(event.target===this)closeSubscriptionPlanModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; border-radius: 16px; padding: 32px 28px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:6px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #60a5fa; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;">
+          ✦ Plan & Membership
+        </div>
+        <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff; margin:0;">Price Monitor Pro</h2>
+      </div>
+      <button onclick="closeSubscriptionPlanModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
+    </div>
+
+    <!-- Current Status Box -->
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
+      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; letter-spacing:0.05em;">Current Membership Status</div>
+      @if(Auth::user()->isAdmin())
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #a78bfa;">Administrator Account</span>
+          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3);">Unlimited</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">You have full administrative privileges across all groups, products, and user accounts.</p>
+      @elseif(Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #34d399;">Pro Plan Active</span>
+          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">Valid until {{ Auth::user()->subscription_ends_at->format('M d, Y') }}</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Full access to live price comparisons, automated deduplication, and multi-group price monitoring.</p>
+      @elseif(Auth::user()->trial_ends_at && Auth::user()->trial_ends_at->isFuture())
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #fbbf24;">30-Day Free Trial</span>
+          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3);">{{ max(0, now()->diffInDays(Auth::user()->trial_ends_at)) }} Days Left</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+          Your free trial is active and valid until <strong>{{ Auth::user()->trial_ends_at->format('M d, Y') }}</strong>. All features are currently available to you.
+        </p>
+      @else
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #f87171;">Trial Expired</span>
+          <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">Access Expired</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">
+          Your free trial has ended. Please subscribe to continue enjoying live price comparisons across Telegram channels.
+        </p>
+      @endif
+    </div>
+
+    <!-- Plan Feature Highlights -->
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 0.82rem; font-weight: 600; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>Plan Benefits</span>
+        <span style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">₹49 <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          <span>Monitor 21+ Telegram groups simultaneously</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          <span>AI & Deterministic smart deduplication</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          <span>Lowest price detection & price difference spread</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+          <span>Complete price history & observation records</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="btn btn-ghost" onclick="closeSubscriptionPlanModal()">Close</button>
+      @if(!Auth::user()->isAdmin())
+        <button class="btn btn-primary" onclick="alert('Subscription gateway will connect here. Your current access is active!'); closeSubscriptionPlanModal();" style="background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+          {{ (Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture()) ? 'Extend Subscription (₹49)' : 'Subscribe Now (₹49 / 30d)' }}
+        </button>
+      @endif
     </div>
   </div>
 </div>
@@ -1474,9 +1595,19 @@ function closeHistory() {
     document.getElementById('historyOverlay').classList.remove('open'); 
 }
 
-// ── Add Group Modal ───────────────────────────────────────────────────────
+// ── Channel Modal ───────────────────────────────────────────────────────
 function openAddModal() { document.getElementById('addModal').classList.add('open'); document.getElementById('groupLinkInput').focus(); }
 function closeAddModal() { document.getElementById('addModal').classList.remove('open'); document.getElementById('addError').style.display='none'; }
+
+// ── Subscription Plan Modal ────────────────────────────────────────────────
+function openSubscriptionPlanModal() {
+  const m = document.getElementById('subscriptionPlanModal');
+  if (m) m.classList.add('open');
+}
+function closeSubscriptionPlanModal() {
+  const m = document.getElementById('subscriptionPlanModal');
+  if (m) m.classList.remove('open');
+}
 
 async function addGroup() {
   const link = document.getElementById('groupLinkInput').value.trim();

@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', 'auth'])->group(function () {
     // ── Groups ──────────────────────────────────────────────────────────────────
     Route::get('/groups',            [GroupController::class, 'index']);
-    Route::post('/groups',           [GroupController::class, 'store']);
-    Route::post('/groups/sync-all',   [GroupController::class, 'syncAll']);
-    Route::post('/groups/{id}/sync', [GroupController::class, 'sync']);
+    
+    // Administrative Group Actions (Admin Only)
+    Route::middleware('admin')->group(function () {
+        Route::post('/groups',           [GroupController::class, 'store']);
+        Route::post('/groups/sync-all',   [GroupController::class, 'syncAll']);
+        Route::post('/groups/{id}/sync', [GroupController::class, 'sync']);
+    });
 
     // ── Board ───────────────────────────────────────────────────────────────────
     Route::get('/board',                  [BoardController::class, 'index']);

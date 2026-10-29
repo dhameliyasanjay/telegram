@@ -300,4 +300,55 @@ class AdminTest extends TestCase
             $response->assertOk();
         }
     }
+
+    /**
+     * Test regular user does not see admin panel link, add group, or sync buttons on board.
+     */
+    public function test_regular_user_does_not_see_admin_controls_on_board(): void
+    {
+        $user = User::factory()->create([
+            'role'          => 'user',
+            'status'        => 'active',
+            'trial_ends_at' => now()->addDays(20),
+        ]);
+
+        $response = $this->actingAs($user)->get('/');
+        $response->assertOk();
+        $response->assertDontSee('Admin Panel');
+        $response->assertDontSee('Add Group');
+        $response->assertDontSee('Sync All History');
+        $response->assertSee('Free Trial');
+        $response->assertSee('My Subscription');
+    }
+
+    /**
+     * Test admin user sees admin panel link, add group, and sync buttons on board.
+     */
+    public function test_admin_user_sees_admin_controls_on_board(): void
+    {
+        $admin = User::factory()->create([
+            'role'   => 'admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/');
+        $response->assertOk();
+        $response->assertSee('Admin Panel');
+        $response->assertSee('Add Group');
+        $response->assertSee('Sync All History');
+    }
+
+    /**
+     * Test regular user cannot invoke group creation or sync APIs.
+     */
+    public function test_regular_user_cannot_call_group_management_apis(): void
+    {
+        $user = User::factory()->create(['role' => 'user', 'status' => 'active']);
+
+        $resStore = $this->actingAs($user)->postJson('/api/groups', ['link' => 'https://t.me/test_ch']);
+        $resStore->assertForbidden();
+
+        $resSyncAll = $this->actingAs($user)->postJson('/api/groups/sync-all');
+        $resSyncAll->assertForbidden();
+    }
 }

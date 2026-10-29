@@ -184,6 +184,51 @@ body {
     </div>
   @endif
 
+  <!-- Membership & Subscription Card -->
+  <div class="card" style="margin-bottom: 24px;">
+    <h2 class="card-title">Membership & Subscription</h2>
+    <p class="card-subtitle">Your current account plan and price monitor access details.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; background: #121215; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;">
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">Account Role</div>
+        @if($user->isAdmin())
+          <span style="font-size: 14px; font-weight: 700; color: #a78bfa; background: rgba(139,92,246,0.12); padding: 3px 10px; border-radius: 6px; border: 1px solid rgba(139,92,246,0.25);">Administrator</span>
+        @else
+          <span style="font-size: 14px; font-weight: 600; color: #fff;">Standard User</span>
+        @endif
+      </div>
+
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">Subscription Status</div>
+        @if($user->isAdmin())
+          <span style="font-size: 14px; font-weight: 600; color: #a78bfa;">Lifetime Admin Access</span>
+        @elseif($user->subscription_ends_at && $user->subscription_ends_at->isFuture())
+          <span style="font-size: 14px; font-weight: 700; color: #34d399; background: rgba(16,185,129,0.12); padding: 3px 10px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">Pro Plan Active</span>
+        @elseif($user->trial_ends_at && $user->trial_ends_at->isFuture())
+          <span style="font-size: 14px; font-weight: 700; color: #fbbf24; background: rgba(245,158,11,0.12); padding: 3px 10px; border-radius: 6px; border: 1px solid rgba(245,158,11,0.25);">30-Day Free Trial</span>
+        @else
+          <span style="font-size: 14px; font-weight: 700; color: #f87171; background: rgba(239,68,68,0.12); padding: 3px 10px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.25);">Expired</span>
+        @endif
+      </div>
+
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px;">Valid Until</div>
+        <div style="font-size: 14px; font-weight: 600; color: #fff;">
+          @if($user->isAdmin())
+            Unlimited
+          @elseif($user->subscription_ends_at && $user->subscription_ends_at->isFuture())
+            {{ $user->subscription_ends_at->format('M d, Y') }}
+          @elseif($user->trial_ends_at && $user->trial_ends_at->isFuture())
+            {{ $user->trial_ends_at->format('M d, Y') }} ({{ max(0, now()->diffInDays($user->trial_ends_at)) }} days left)
+          @else
+            Access Expired
+          @endif
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <form method="POST" action="{{ route('profile.update') }}">
       @csrf
