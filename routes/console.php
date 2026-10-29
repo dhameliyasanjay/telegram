@@ -10,9 +10,10 @@ Artisan::command('inspire', function () {
 
 /**
  * Scheduled Tasks
- * Automatically queues recent product syncs for all monitored groups hourly.
+ * Automatically executes the unified Telegram sync, product deduplication,
+ * and canonical price comparison updates every 1 hour.
  */
-Schedule::command('telegram:sync --limit=50 --queue')
+Schedule::command('telegram:hourly-sync --limit=100')
     ->hourly()
     ->withoutOverlapping(60)
     ->runInBackground();
