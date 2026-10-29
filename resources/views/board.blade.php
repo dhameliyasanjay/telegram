@@ -649,30 +649,6 @@ body {
       </div>
     </header>
 
-    <!-- Stats -->
-    <div class="stats-bar" id="statsBar">
-      <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> Monitored Groups</div>
-          <div class="stat-value" id="statGroups">—</div>
-      </div>
-      <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> Canonical Products</div>
-          <div class="stat-value" id="statProducts">—</div>
-      </div>
-      <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> Multi-Group Matches</div>
-          <div class="stat-value" id="statMultiGroup" style="color:#60a5fa">—</div>
-      </div>
-      <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg> Total Group Offers</div>
-          <div class="stat-value" id="statOffers">—</div>
-      </div>
-      <div class="stat-card">
-          <div class="stat-label"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Parsed Prices</div>
-          <div class="stat-value" id="statPriced">—</div>
-      </div>
-    </div>
-
     <!-- Group Dropdown -->
     <div class="group-dropdown-wrap">
       <select class="group-select" id="groupSelect" onchange="onGroupChange(this.value)">
@@ -1334,14 +1310,20 @@ function handleLiveUpdate(data) {
 
 // ── Stats ─────────────────────────────────────────────────────────────────
 async function loadStats() {
+  const g = document.getElementById('statGroups');
+  if (!g) return;
   try {
     const r = await fetch(`${API}/board/stats`);
     const d = await r.json();
-    document.getElementById('statGroups').textContent = d.total_groups ?? 0;
-    document.getElementById('statProducts').textContent = d.total_canonical_products ?? d.total_products ?? 0;
-    document.getElementById('statMultiGroup').textContent = d.multi_group_products ?? 0;
-    document.getElementById('statOffers').textContent = d.total_offers ?? 0;
-    document.getElementById('statPriced').textContent = d.with_price ?? 0;
+    g.textContent = d.total_groups ?? 0;
+    const p = document.getElementById('statProducts');
+    if (p) p.textContent = d.total_canonical_products ?? d.total_products ?? 0;
+    const m = document.getElementById('statMultiGroup');
+    if (m) m.textContent = d.multi_group_products ?? 0;
+    const o = document.getElementById('statOffers');
+    if (o) o.textContent = d.total_offers ?? 0;
+    const pr = document.getElementById('statPriced');
+    if (pr) pr.textContent = d.with_price ?? 0;
   } catch(e) {}
 }
 
