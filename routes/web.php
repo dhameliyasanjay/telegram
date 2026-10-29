@@ -30,7 +30,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // ── Authenticated Application Routes ────────────────────────────────────────
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/profile', [AuthController::class, 'showProfile'])->name('profile');

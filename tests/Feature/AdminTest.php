@@ -36,7 +36,7 @@ class AdminTest extends TestCase
 
         $response = $this->actingAs($user)->get('/admin/dashboard');
         $response->assertRedirect('/admin/login');
-        $this->assertGuest();
+        $this->assertGuest('admin');
     }
 
     /**
@@ -68,7 +68,7 @@ class AdminTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.dashboard'));
-        $this->assertAuthenticatedAs($admin);
+        $this->assertAuthenticatedAs($admin, 'admin');
     }
 
     /**

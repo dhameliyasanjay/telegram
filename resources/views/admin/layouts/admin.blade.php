@@ -386,6 +386,16 @@
       border-color: var(--border-focus);
     }
 
+    /* Pagination Styling (prevents giant SVG arrows & matches theme) */
+    nav[role="navigation"] svg {
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px !important;
+      max-height: 14px !important;
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+
     /* Responsive */
     @media (max-width: 900px) {
       .admin-sidebar {
@@ -490,10 +500,10 @@
     <div class="user-footer">
       <div class="admin-user-info">
         <div class="admin-avatar">
-          {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+          {{ strtoupper(substr((auth('admin')->user() ?? auth()->user())?->name ?? 'A', 0, 1)) }}
         </div>
         <div class="admin-meta">
-          <div class="admin-name">{{ auth()->user()->name }}</div>
+          <div class="admin-name">{{ (auth('admin')->user() ?? auth()->user())?->name }}</div>
           <div class="admin-role">Administrator</div>
         </div>
       </div>

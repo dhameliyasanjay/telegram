@@ -18,7 +18,7 @@ class AdminAuthController extends Controller
      */
     public function showLoginForm(): View|RedirectResponse
     {
-        if (Auth::check() && Auth::user()->isAdmin()) {
+        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
 
@@ -46,7 +46,7 @@ class AdminAuthController extends Controller
 
         $remember = $request->boolean('remember');
 
-        if (! Auth::attempt($credentials, $remember)) {
+        if (! Auth::guard('admin')->attempt($credentials, $remember)) {
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors([
@@ -54,14 +54,11 @@ class AdminAuthController extends Controller
             ])->onlyInput('email');
         }
 
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         // Strict verification: Must have admin role
         if (! $user->isAdmin()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
+            Auth::guard('admin')->logout();
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors([
@@ -71,9 +68,7 @@ class AdminAuthController extends Controller
 
         // Verification: Must not be suspended
         if ($user->isBlocked()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            Auth::guard('admin')->logout();
 
             return back()->withErrors([
                 'email' => 'Your administrator account has been suspended.',
@@ -81,7 +76,6 @@ class AdminAuthController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
-        $request->session()->regenerate();
 
         AdminActivityLog::record(
             'admin_login',
@@ -97,7 +91,7 @@ class AdminAuthController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         if ($user) {
             AdminActivityLog::record(
@@ -107,9 +101,7 @@ class AdminAuthController extends Controller
             );
         }
 
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        Auth::guard('admin')->logout();
 
         return redirect()->route('admin.login')->with('status', 'You have been signed out of the Administrator Portal.');
     }

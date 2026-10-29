@@ -43,7 +43,7 @@ class AdminActivityLog extends Model
         mixed $entity = null,
         ?array $details = null
     ): self {
-        $admin = Auth::user();
+        $admin = Auth::guard('admin')->user() ?? Auth::user();
 
         // Sanitize details to never record passwords, auth tokens, or private secrets
         if ($details) {

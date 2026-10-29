@@ -72,3 +72,4 @@ class SubscriptionController extends Controller
         ]);
     }
 }
+

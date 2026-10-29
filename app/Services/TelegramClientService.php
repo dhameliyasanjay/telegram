@@ -47,35 +47,89 @@ class TelegramClientService
     }
 
     /**
-     * Join a group by invite link or username. Silent if already a member.
+     * Join a group by invite link or username. Throws descriptive error if invite is expired/invalid.
      */
     public function joinGroup(API $client, string $link): void
     {
         try {
             if ($this->isInviteLink($link)) {
-                $client->messages->importChatInvite(['hash' => $this->extractInviteHash($link)]);
+                $hash = $this->extractInviteHash($link);
+                $client->messages->importChatInvite(['hash' => $hash]);
             } else {
                 $client->channels->joinChannel(['channel' => $this->extractUsername($link)]);
             }
         } catch (\Throwable $e) {
-            Log::info('joinGroup (already member or error): ' . $e->getMessage());
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'USER_ALREADY_PARTICIPANT')) {
+                // Already a member, perfectly normal
+                return;
+            }
+            if (str_contains($msg, 'INVITE_HASH_EXPIRED')) {
+                throw new \RuntimeException('The Telegram invite link has expired (INVITE_HASH_EXPIRED). Please ask the group admin for an active invite link.');
+            }
+            if (str_contains($msg, 'INVITE_HASH_INVALID')) {
+                throw new \RuntimeException('The Telegram invite link is invalid. Please verify the URL.');
+            }
+            if (str_contains($msg, 'CHANNELS_TOO_MUCH')) {
+                throw new \RuntimeException('The Telegram account has joined too many channels.');
+            }
+            Log::info('joinGroup notice: ' . $msg);
         }
     }
 
     /**
      * Resolve a peer link and return normalized group info array.
-     * Uses getPwrChat() (returns title/participants_count directly), with getInfo() fallback.
+     * Uses checkChatInvite / getPwrChat / getInfo.
      */
     public function getGroupInfo(API $client, string $link): array
     {
+        // ── 1. Handle Private Invite Links (t.me/+hash or t.me/joinchat/hash) ──
+        if ($this->isInviteLink($link)) {
+            $hash = $this->extractInviteHash($link);
+            try {
+                $check = $client->messages->checkChatInvite(['hash' => $hash]);
+                $chat = $check['chat'] ?? $check;
+
+                $rawId = abs((int)($chat['id'] ?? 0));
+                // Convert channel ID to Bot API ID (-100...) format if needed
+                $tid = $rawId;
+                if ($rawId > 0 && !str_starts_with((string)$rawId, '100')) {
+                    $tid = (int) ('100' . $rawId);
+                }
+
+                $title = $chat['title'] ?? $hash;
+                $members = (int)($chat['participants_count'] ?? 0);
+
+                if ($tid > 0) {
+                    return [
+                        'telegram_id'  => $tid,
+                        'title'        => $title,
+                        'invite_link'  => $link,
+                        'member_count' => $members,
+                        'photo_url'    => null,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $msg = $e->getMessage();
+                if (str_contains($msg, 'INVITE_HASH_EXPIRED')) {
+                    throw new \RuntimeException('The Telegram invite link has expired (INVITE_HASH_EXPIRED). Please ask the group admin for an active invite link.');
+                }
+                if (str_contains($msg, 'INVITE_HASH_INVALID')) {
+                    throw new \RuntimeException('The Telegram invite link is invalid. Please verify the invite link.');
+                }
+                Log::warning('Invite check failed: ' . $msg);
+            }
+        }
+
+        // ── 2. Handle Public Channels / Usernames ─────────────────────────────
         $peer = $this->isInviteLink($link)
             ? $this->extractInviteHash($link)
             : $this->extractUsername($link);
 
-        // ── Primary: getPwrChat (cleanest structure) ──────────────────────
+        // Primary: getPwrChat
         try {
             $info = $client->getPwrChat($peer, false);
-            Log::info('getPwrChat OK', ['id' => $info['id'] ?? null, 'title' => $info['title'] ?? null, 'type' => $info['type'] ?? null]);
+            Log::info('getPwrChat OK', ['id' => $info['id'] ?? null, 'title' => $info['title'] ?? null]);
 
             return [
                 'telegram_id'  => abs((int)($info['id'] ?? 0)),
@@ -88,9 +142,7 @@ class TelegramClientService
             Log::warning('getPwrChat failed: ' . $e->getMessage());
         }
 
-        // ── Fallback: getInfo ─────────────────────────────────────────────
-        // getInfo() returns: bot_api_id, type, Chat=>[...], User=>[...]
-        // 'Chat' key covers both channels AND basic chats in MadelineProto v8
+        // Fallback: getInfo
         try {
             $info      = $client->getInfo($peer);
             $botApiId  = (int)($info['bot_api_id'] ?? 0);
