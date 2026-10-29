@@ -16,16 +16,16 @@ class AdminTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Test guest cannot access admin dashboard.
+     * Test guest is redirected to dedicated admin login from admin routes.
      */
-    public function test_guest_is_redirected_to_login_from_admin_routes(): void
+    public function test_guest_is_redirected_to_admin_login(): void
     {
         $response = $this->get('/admin/dashboard');
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/admin/login');
     }
 
     /**
-     * Test regular user receives 403 Forbidden on admin routes.
+     * Test regular user attempting to access admin route is cleanly logged out and redirected to admin login.
      */
     public function test_regular_user_cannot_access_admin_dashboard(): void
     {
@@ -35,7 +35,61 @@ class AdminTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get('/admin/dashboard');
-        $response->assertForbidden();
+        $response->assertRedirect('/admin/login');
+        $this->assertGuest();
+    }
+
+    /**
+     * Test admin login page renders successfully.
+     */
+    public function test_admin_login_page_renders_successfully(): void
+    {
+        $response = $this->get('/admin/login');
+        $response->assertOk();
+        $response->assertSee('Administrator Portal');
+        $response->assertSee('Control Panel Login');
+    }
+
+    /**
+     * Test administrator can authenticate via dedicated admin login.
+     */
+    public function test_administrator_can_authenticate_via_admin_login(): void
+    {
+        $admin = User::factory()->create([
+            'email'    => 'admin_test@example.com',
+            'password' => bcrypt('adminsecret123'),
+            'role'     => 'admin',
+            'status'   => 'active',
+        ]);
+
+        $response = $this->post('/admin/login', [
+            'email'    => 'admin_test@example.com',
+            'password' => 'adminsecret123',
+        ]);
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    /**
+     * Test regular user cannot log in via dedicated admin login.
+     */
+    public function test_regular_user_cannot_log_in_via_admin_login(): void
+    {
+        $user = User::factory()->create([
+            'email'    => 'customer@example.com',
+            'password' => bcrypt('customerpass123'),
+            'role'     => 'user',
+            'status'   => 'active',
+        ]);
+
+        $response = $this->post('/admin/login', [
+            'email'    => 'customer@example.com',
+            'password' => 'customerpass123',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertGuest();
     }
 
     /**

@@ -496,7 +496,7 @@
           <div class="admin-role">Administrator</div>
         </div>
       </div>
-      <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+      <form action="{{ route('admin.logout') }}" method="POST" style="margin: 0;">
         @csrf
         <button type="submit" class="btn btn-secondary btn-sm" title="Log Out">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>

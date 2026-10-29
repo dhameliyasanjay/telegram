@@ -17,7 +17,7 @@ class EnsureAdmin
         if (! Auth::check()) {
             return $request->expectsJson()
                 ? response()->json(['error' => 'Unauthenticated.'], 401)
-                : redirect()->guest(route('login'));
+                : redirect()->guest(route('admin.login'));
         }
 
         /** @var \App\Models\User $user */
@@ -31,7 +31,7 @@ class EnsureAdmin
 
             return $request->expectsJson()
                 ? response()->json(['error' => 'Your account is suspended.'], 403)
-                : redirect()->route('login')->withErrors(['email' => 'Your account has been suspended by an administrator.']);
+                : redirect()->route('admin.login')->withErrors(['email' => 'Your account has been suspended by an administrator.']);
         }
 
         // Check if user is an admin
@@ -40,7 +40,14 @@ class EnsureAdmin
                 return response()->json(['error' => 'Forbidden. Administrator privileges required.'], 403);
             }
 
-            abort(403, 'Forbidden. Administrator privileges required to access the Admin Panel.');
+            // Cleanly log out standard user and redirect to Admin Login with clear message
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('admin.login')->withErrors([
+                'email' => 'Access Restricted: The account you were signed in with is a standard customer account. Please enter your Administrator credentials.',
+            ]);
         }
 
         return $next($request);
