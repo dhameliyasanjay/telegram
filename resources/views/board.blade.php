@@ -178,19 +178,56 @@ body {
 .card-time { font-size: 12px; color: var(--text-muted); font-family: 'Inter', sans-serif; }
 .price-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: rgba(255,255,255,0.1); }
 
-/* Download button on card image */
+/* Download button on card image (icon only) */
 .card-download-btn {
   position: absolute; top: 10px; right: 10px; z-index: 10;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-  color: #fff; padding: 6px 10px; font-size: 12px; font-weight: 600;
-  font-family: 'Outfit', sans-serif; cursor: pointer; text-decoration: none;
-  display: inline-flex; align-items: center; gap: 5px;
-  opacity: 0; transition: opacity 0.2s, background 0.2s;
+  width: 32px; height: 32px; padding: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+  color: #fff; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: 0; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 .card:hover .card-download-btn { opacity: 1; pointer-events: all; }
-.card-download-btn:hover { background: rgba(59,130,246,0.75); border-color: rgba(59,130,246,0.5); }
+.card-download-btn:hover { background: rgba(59,130,246,0.85); border-color: rgba(59,130,246,0.5); transform: scale(1.05); }
+
+/* Paywall Blur Styles for Expired Users */
+.paywall-blur {
+  filter: blur(5px) !important;
+  user-select: none !important;
+  pointer-events: none !important;
+  opacity: 0.72;
+  transition: filter 0.3s ease;
+}
+.paywall-blur-heavy {
+  filter: blur(8px) !important;
+  user-select: none !important;
+  pointer-events: none !important;
+  opacity: 0.65;
+  transition: filter 0.3s ease;
+}
+.paywall-locked-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 2px 7px;
+  border-radius: 5px;
+  margin-left: 6px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+.paywall-locked-pill:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+}
 .price-updated-recent { color: var(--green); background: rgba(16,185,129,0.15); box-shadow: 0 0 10px rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); }
 
 @keyframes flash-green { 0% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); border-color: var(--green); } 100% { box-shadow: none; border-color: var(--border); } }
@@ -805,6 +842,48 @@ body {
   </div>
 </div>
 
+<!-- Trial Expired Auto-Scroll Popup Modal -->
+<div class="modal-bg" id="trialExpiredNoticeModal" onclick="if(event.target===this)closeTrialExpiredModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 480px; width: 100%; border-radius: 18px; padding: 32px 28px; background: #18181b; border: 1px solid rgba(239, 68, 68, 0.25); box-shadow: 0 25px 60px rgba(0,0,0,0.8); text-align: center;">
+    
+    <div style="width: 60px; height: 60px; border-radius: 16px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    </div>
+
+    <div style="display:inline-flex; align-items:center; gap:6px; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #f87171; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;">
+      ✦ Access Locked
+    </div>
+
+    <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Your Free Trial Has Ended</h2>
+    
+    <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 20px;">
+      Real-time Telegram prices, wholesale supplier channels, and photo downloads are now blurred. Activate your Pro Plan to instantly unlock full access!
+    </p>
+
+    <!-- Pricing Highlight Box -->
+    <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: left;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-weight: 600; color: #fff; font-size: 0.95rem;">Price Monitor Pro</span>
+        <span style="font-weight: 700; color: #60a5fa; font-size: 1.25rem;">₹49 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
+      </div>
+      <div style="font-size: 0.8rem; color: #a1a1aa; line-height: 1.6;">
+        ✓ Unblur all live prices & lowest offer indicators<br>
+        ✓ Access 21+ Telegram supplier channels & links<br>
+        ✓ View verified supplier Phone numbers, WhatsApp & Locations<br>
+        ✓ Full resolution photo downloads
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <button class="btn btn-primary" onclick="closeTrialExpiredModal(); openSubscriptionPlanModal();" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; border: none; border-radius: 10px; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); cursor: pointer; margin-bottom: 10px;">
+      Upgrade to Pro Plan — ₹49 &rarr;
+    </button>
+    <button class="btn btn-ghost" onclick="closeTrialExpiredModal()" style="width: 100%; color: var(--text-muted); font-size: 0.85rem; border: none; background: none; cursor: pointer; padding: 8px;">
+      Continue Browsing (Blurred Preview)
+    </button>
+  </div>
+</div>
+
 <!-- Smart Price Comparison Drawer (Rule A: 1 offer per group, Rule B: All groups shown) -->
 <div class="drawer-overlay" id="compareOverlay" onclick="closeCompareDrawer()"></div>
 <div class="drawer drawer-wide" id="compareDrawer">
@@ -1064,6 +1143,7 @@ body {
 </div>
 
 <script>
+const USER_HAS_ACTIVE_ACCESS = {{ (Auth::check() && Auth::user()->hasActiveAccess()) ? 'true' : 'false' }};
 const API = '/api';
 let currentGroup = null;
 let currentPhotoHash = null;
@@ -1075,6 +1155,7 @@ let infinitePage = 1;
 let infiniteLastPage = 1;
 let infiniteLoading = false;
 let infiniteObserver = null;
+let scrollModalTriggered = false;
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -1083,13 +1164,35 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBoard();
   setupInfiniteScroll();
   connectSse();
+  if (!USER_HAS_ACTIVE_ACCESS) {
+    setupTrialExpiredScrollTrigger();
+  }
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
-  document.getElementById('addModal').addEventListener('click', function(e){
+  document.getElementById('addModal')?.addEventListener('click', function(e){
     if(e.target === this) closeAddModal();
   });
 });
+
+function setupTrialExpiredScrollTrigger() {
+  window.addEventListener('scroll', () => {
+    if (!scrollModalTriggered && window.scrollY > 80) {
+      scrollModalTriggered = true;
+      openTrialExpiredModal();
+    }
+  }, { passive: true });
+}
+
+function openTrialExpiredModal() {
+  const m = document.getElementById('trialExpiredNoticeModal');
+  if (m) m.classList.add('open');
+}
+
+function closeTrialExpiredModal() {
+  const m = document.getElementById('trialExpiredNoticeModal');
+  if (m) m.classList.remove('open');
+}
 
 // ── SSE ───────────────────────────────────────────────────────────────────
 function connectSse() {
@@ -1319,14 +1422,17 @@ function cardHtml(p) {
 
   const time = p.last_observed_at ? timeAgo(p.last_observed_at) : '';
 
-  // Multi-group vs Single-group badge
+  // Multi-group vs Single-group badge (blurred when trial expired)
+  const groupBadgeClass = USER_HAS_ACTIVE_ACCESS ? '' : 'paywall-blur';
   const groupBadge = p.offers_count > 1
-    ? `<span class="badge-multi-group"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> ${p.offers_count} Groups</span>`
-    : `<span class="badge-single-group">${escHtml(p.cheapest_group?.title || '1 Group')}</span>`;
+    ? `<span class="badge-multi-group ${groupBadgeClass}"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> ${p.offers_count} Groups</span>`
+    : `<span class="badge-single-group ${groupBadgeClass}">${escHtml(p.cheapest_group?.title || '1 Group')}</span>`;
 
-  // Download photo button
+  // Download photo button (icon only; blurred and intercepted if trial expired)
+  const dlClass = USER_HAS_ACTIVE_ACCESS ? '' : 'paywall-blur';
+  const dlAction = USER_HAS_ACTIVE_ACCESS ? '' : 'event.preventDefault(); openTrialExpiredModal();';
   const dlBtn = imgUrl
-    ? `<a class="card-download-btn" href="${escHtml(imgUrl)}" download onclick="event.stopPropagation()" title="Download image"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v13M8 12l4 4 4-4M3 19h18" stroke-linecap="round" stroke-linejoin="round"/></svg>Download</a>`
+    ? `<a class="card-download-btn ${dlClass}" href="${escHtml(imgUrl)}" ${USER_HAS_ACTIVE_ACCESS ? 'download' : ''} onclick="event.stopPropagation(); ${dlAction}" title="${USER_HAS_ACTIVE_ACCESS ? 'Download image' : 'Upgrade to Download'}"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v13M8 12l4 4 4-4M3 19h18" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`
     : '';
 
   // Meta chips (Brand & Model)
@@ -1335,17 +1441,16 @@ function cardHtml(p) {
   if (p.model) chips += `<span class="chip-pill chip-model">${escHtml(p.model)}</span>`;
   const chipsHtml = chips ? `<div class="card-meta-chips">${chips}</div>` : '';
 
-  // Lowest in group indicator
-  const bestGroupHtml = (p.offers_count > 1 && p.cheapest_group?.title)
-    ? `<div class="card-best-group"><span class="best-dot"></span> Lowest in <strong>${escHtml(p.cheapest_group.title)}</strong></div>`
-    : `<div class="card-best-group"><span class="best-dot"></span> ${escHtml(p.cheapest_group?.title || 'Single Group')}</div>`;
-
   // Price spread
   let spreadHtml = '';
   if (hasPrice && p.highest_price && p.highest_price > p.cheapest_price) {
     const diff = Math.round((p.highest_price - p.cheapest_price) * 100) / 100;
     spreadHtml = `<div class="card-price-spread">Spread: ₹${Number(p.cheapest_price).toLocaleString('en-IN')} – ₹${Number(p.highest_price).toLocaleString('en-IN')} <span class="spread-savings">(Save ₹${Number(diff).toLocaleString('en-IN')})</span></div>`;
   }
+
+  // Price paywall blurring
+  const priceBlurClass = USER_HAS_ACTIVE_ACCESS ? '' : 'paywall-blur-heavy';
+  const priceLockBadge = USER_HAS_ACTIVE_ACCESS ? '' : `<span class="paywall-locked-pill" onclick="event.stopPropagation(); openTrialExpiredModal();"><svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm3 8H9V7a3 3 0 016 0v3z"/></svg> LOCKED</span>`;
 
   return `
   <div class="card" id="cp-${p.id}" onclick="openCompareDrawer(${p.id})">
@@ -1357,14 +1462,16 @@ function cardHtml(p) {
     <div class="card-body">
       ${chipsHtml}
       <div class="card-name" title="${escHtml(p.product_name)}">${escHtml(p.product_name)}</div>
-      ${bestGroupHtml}
       
-      <div>
+      <div onclick="${USER_HAS_ACTIVE_ACCESS ? '' : 'event.stopPropagation(); openTrialExpiredModal();'}" style="cursor: pointer;">
         <div class="card-price">
-          ${hasPrice ? '<span class="curr">₹</span>' : ''}${hasPrice ? Number(p.cheapest_price).toLocaleString('en-IN') : '<span style="font-size:16px;color:var(--text-muted);font-weight:500">Unlisted</span>'}
-          ${hasPrice ? '<span class="badge-best-price">BEST OFFER</span>' : ''}
+          <span class="${priceBlurClass}">
+            ${hasPrice ? '<span class="curr">₹</span>' : ''}${hasPrice ? Number(p.cheapest_price).toLocaleString('en-IN') : '<span style="font-size:16px;color:var(--text-muted);font-weight:500">Unlisted</span>'}
+            ${hasPrice ? '<span class="badge-best-price">BEST OFFER</span>' : ''}
+          </span>
+          ${priceLockBadge}
         </div>
-        ${spreadHtml}
+        ${spreadHtml ? `<div class="${priceBlurClass}">${spreadHtml}</div>` : ''}
       </div>
 
       <div class="card-footer" style="margin-top:14px;">
@@ -1385,6 +1492,10 @@ async function openCompareDrawer(id) {
 
   overlay.classList.add('open');
   drawer.classList.add('open');
+
+  if (!USER_HAS_ACTIVE_ACCESS) {
+    document.getElementById('compareHeroGrid')?.classList.add('paywall-blur-heavy');
+  }
 
   if (p) {
     renderCompareDrawer(p);
@@ -1416,6 +1527,14 @@ function renderCompareDrawer(p) {
   if (p.category) chips += `<span class="chip-pill" style="background:rgba(255,255,255,0.08);color:var(--text);">${escHtml(p.category)}</span>`;
   document.getElementById('compareMetaChips').innerHTML = chips;
 
+  // Hero Grid Paywall Blurring
+  const heroGrid = document.getElementById('compareHeroGrid');
+  if (USER_HAS_ACTIVE_ACCESS) {
+    heroGrid.classList.remove('paywall-blur-heavy');
+  } else {
+    heroGrid.classList.add('paywall-blur-heavy');
+  }
+
   // Render Hero Metrics
   const cheapest = p.cheapest_price != null ? `₹${Number(p.cheapest_price).toLocaleString('en-IN')}` : 'Unlisted';
   const highest = p.highest_price != null ? `₹${Number(p.highest_price).toLocaleString('en-IN')}` : 'Unlisted';
@@ -1440,24 +1559,90 @@ function renderCompareDrawer(p) {
     return;
   }
 
+  // Paywall Callout Banner at top of drawer
+  const paywallBanner = USER_HAS_ACTIVE_ACCESS ? '' : `
+    <div style="background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.25); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+      <div>
+        <div style="color: #fff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Wholesale Supplier Intelligence Locked
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.82rem; line-height: 1.4;">
+          Your free trial has ended. Subscribe for ₹49 to unlock direct Telegram supplier channels, unblurred prices, and verified supplier contact details.
+        </div>
+      </div>
+      <button onclick="openSubscriptionPlanModal()" class="btn btn-primary" style="white-space: nowrap; padding: 10px 18px; font-size: 0.88rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+        Unlock for ₹49 &rarr;
+      </button>
+    </div>`;
+
   const offersHtml = offers.map(o => {
     const isCheapest = o.is_cheapest;
     const hasPrice = (o.latest_price != null && o.latest_price > 0);
-    const priceText = hasPrice ? `₹${Number(o.latest_price).toLocaleString('en-IN')}` : 'Unlisted';
+    const rawPrice = hasPrice ? `₹${Number(o.latest_price).toLocaleString('en-IN')}` : 'Unlisted';
+    const priceText = USER_HAS_ACTIVE_ACCESS ? rawPrice : `<span class="paywall-blur-heavy">${rawPrice}</span>`;
 
     let priceTag = '';
-    if (isCheapest && hasPrice) {
-      priceTag = `<span class="pill-cheapest-tag">🏆 CHEAPEST OFFER</span>`;
-    } else if (o.price_diff != null && o.price_diff > 0) {
-      priceTag = `<span class="pill-diff-tag">+₹${Number(o.price_diff).toLocaleString('en-IN')}</span>`;
+    if (USER_HAS_ACTIVE_ACCESS) {
+      if (isCheapest && hasPrice) {
+        priceTag = `<span class="pill-cheapest-tag">🏆 CHEAPEST OFFER</span>`;
+      } else if (o.price_diff != null && o.price_diff > 0) {
+        priceTag = `<span class="pill-diff-tag">+₹${Number(o.price_diff).toLocaleString('en-IN')}</span>`;
+      }
+    } else {
+      priceTag = `<span class="paywall-locked-pill" onclick="openSubscriptionPlanModal()"><svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm3 8H9V7a3 3 0 016 0v3z"/></svg> LOCKED</span>`;
     }
 
     const tgBtn = o.group_link
-      ? `<a href="${escHtml(o.group_link)}" target="_blank" rel="noopener noreferrer" class="btn-tg-link">
-          <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-          Open in Telegram &nearr;
-         </a>`
+      ? (USER_HAS_ACTIVE_ACCESS
+          ? `<a href="${escHtml(o.group_link)}" target="_blank" rel="noopener noreferrer" class="btn-tg-link">
+              <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+              Open in Telegram &nearr;
+             </a>`
+          : `<button onclick="openTrialExpiredModal()" class="btn-tg-link" style="cursor:pointer; opacity:0.85;">
+              <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm3 8H9V7a3 3 0 016 0v3z"/></svg>
+              Telegram Locked
+             </button>`
+        )
       : '';
+
+    // Supplier Contact & Location Details
+    const supplierBlur = USER_HAS_ACTIVE_ACCESS ? '' : 'paywall-blur';
+    const locText = o.group_location || (USER_HAS_ACTIVE_ACCESS ? '' : 'Wholesale Market');
+    const phoneText = o.group_phone || (USER_HAS_ACTIVE_ACCESS ? '' : '+91 98XXX XXXXX');
+    const addrText = o.group_address || (USER_HAS_ACTIVE_ACCESS ? '' : 'Verified Merchant Warehouse, Commercial Market');
+
+    let supplierDetailsHtml = '';
+    if (locText || phoneText || addrText) {
+      supplierDetailsHtml = `
+      <div class="offer-supplier-details ${supplierBlur}" style="margin: 10px 0; padding: 10px 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
+          ${locText ? `
+            <div style="display:inline-flex; align-items:center; gap:5px; color:#d4d4d8;">
+              <svg width="13" height="13" fill="none" stroke="#60a5fa" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+              <span><strong>Location:</strong> ${escHtml(locText)}</span>
+            </div>` : ''}
+          ${phoneText ? `
+            <div style="display:inline-flex; align-items:center; gap:5px; color:#d4d4d8;">
+              <svg width="13" height="13" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              <span><strong>Contact:</strong> ${USER_HAS_ACTIVE_ACCESS && o.group_phone ? `<a href="tel:${escHtml(o.group_phone)}" style="color:#10b981; font-weight:600; text-decoration:none;">${escHtml(o.group_phone)}</a>` : escHtml(phoneText)}</span>
+            </div>` : ''}
+        </div>
+        ${addrText ? `
+          <div style="display:flex; align-items:flex-start; gap:5px; color:var(--text-muted);">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:2px;"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <span><strong>Address:</strong> ${escHtml(addrText)}</span>
+          </div>` : ''}
+      </div>`;
+    }
+
+    const titleHtml = USER_HAS_ACTIVE_ACCESS
+      ? `<span>${escHtml(o.group_title)}</span>`
+      : `<span class="paywall-blur">${escHtml(o.group_title)}</span>`;
+
+    const membersHtml = USER_HAS_ACTIVE_ACCESS
+      ? `${o.member_count ? `${Number(o.member_count).toLocaleString()} members &bull; ` : ''}Observed ${o.last_updated_at ? timeAgo(o.last_updated_at) : 'recently'}`
+      : `<span class="paywall-blur">9,850 members &bull; Observed recently</span>`;
 
     return `
     <div class="compare-offer-row ${isCheapest ? 'is-cheapest-row' : ''}">
@@ -1465,10 +1650,10 @@ function renderCompareDrawer(p) {
         <div class="offer-group-meta">
           <div class="offer-group-title">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-            <span>${escHtml(o.group_title)}</span>
+            ${titleHtml}
           </div>
           <div class="offer-group-members">
-            ${o.member_count ? `${Number(o.member_count).toLocaleString()} members &bull; ` : ''}Observed ${o.last_updated_at ? timeAgo(o.last_updated_at) : 'recently'}
+            ${membersHtml}
           </div>
         </div>
 
@@ -1478,14 +1663,17 @@ function renderCompareDrawer(p) {
         </div>
       </div>
 
+      ${supplierDetailsHtml}
+
       <div class="offer-row-bottom">
         <div>Rule A: Verified single current offer for this group</div>
         <div class="offer-actions">
-          <button class="btn-history-toggle" onclick="toggleOfferHistory(${o.id}, this)">
+          <button class="btn-history-toggle" onclick="${USER_HAS_ACTIVE_ACCESS ? `toggleOfferHistory(${o.id}, this)` : 'openTrialExpiredModal()'}">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             Price History
           </button>
           ${tgBtn}
+          ${!USER_HAS_ACTIVE_ACCESS ? `<button onclick="openSubscriptionPlanModal()" class="btn btn-secondary btn-sm" style="font-size:11px; color:#60a5fa; border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.1); padding:5px 10px; border-radius:6px; cursor:pointer;">Unlock Plan ₹49</button>` : ''}
         </div>
       </div>
 
@@ -1493,7 +1681,7 @@ function renderCompareDrawer(p) {
     </div>`;
   }).join('');
 
-  document.getElementById('compareOffersList').innerHTML = offersHtml;
+  document.getElementById('compareOffersList').innerHTML = paywallBanner + offersHtml;
 }
 
 function closeCompareDrawer() {

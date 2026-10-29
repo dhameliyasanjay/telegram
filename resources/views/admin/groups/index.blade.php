@@ -126,7 +126,7 @@
                 </form>
 
                 <!-- Edit Button -->
-                <button type="button" class="btn btn-secondary btn-sm" onclick="openEditGroupModal({{ $group->id }}, '{{ addslashes($group->title) }}', '{{ addslashes($group->invite_link ?? '') }}')">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openEditGroupModal({{ $group->id }}, '{{ addslashes($group->title) }}', '{{ addslashes($group->invite_link ?? '') }}', '{{ addslashes($group->phone ?? '') }}', '{{ addslashes($group->location ?? '') }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $group->address ?? '')) }}')">
                   Edit
                 </button>
 
@@ -204,6 +204,20 @@
         <label class="form-label">Invite Link</label>
         <input type="text" id="editGroupLink" name="invite_link" class="form-input">
       </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Phone / WhatsApp</label>
+          <input type="text" id="editGroupPhone" name="phone" placeholder="+91 98765 43210" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / City</label>
+          <input type="text" id="editGroupLocation" name="location" placeholder="e.g. Surat, Gujarat" class="form-input">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Store / Warehouse Address</label>
+        <textarea id="editGroupAddress" name="address" rows="2" placeholder="e.g. Shop 102, Millennium Market, Ring Road, Surat" class="form-input" style="resize:vertical;"></textarea>
+      </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
         <button type="button" class="btn btn-secondary" onclick="closeEditGroupModal()">Cancel</button>
@@ -223,11 +237,14 @@
   function closeAddGroupModal() {
     document.getElementById('addGroupModal').style.display = 'none';
   }
-  function openEditGroupModal(id, title, link) {
+  function openEditGroupModal(id, title, link, phone = '', location = '', address = '') {
     const modal = document.getElementById('editGroupModal');
     document.getElementById('editGroupForm').action = `/admin/telegram-groups/${id}`;
     document.getElementById('editGroupTitle').value = title;
     document.getElementById('editGroupLink').value = link;
+    document.getElementById('editGroupPhone').value = phone;
+    document.getElementById('editGroupLocation').value = location;
+    document.getElementById('editGroupAddress').value = address;
     modal.style.display = 'flex';
   }
   function closeEditGroupModal() {

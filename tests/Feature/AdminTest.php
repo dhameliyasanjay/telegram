@@ -425,4 +425,81 @@ class AdminTest extends TestCase
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('http://localhost/admin/users', $response->getTargetUrl());
     }
+
+    /**
+     * Test admin can update group supplier details (phone, location, address).
+     */
+    public function test_admin_can_update_group_supplier_details(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+        $group = TelegramGroup::create([
+            'telegram_id' => 888777666,
+            'title'       => 'Supplier Details Test Group',
+            'invite_link' => 'https://t.me/supplier_test',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->actingAs($admin)->putJson("/admin/telegram-groups/{$group->id}", [
+            'title'       => 'Updated Supplier Hub',
+            'invite_link' => 'https://t.me/updated_hub',
+            'phone'       => '+91 98250 12345',
+            'location'    => 'Surat Textile Market',
+            'address'     => 'Shop 204, Millennium Ring Road',
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('telegram_groups', [
+            'id'       => $group->id,
+            'phone'    => '+91 98250 12345',
+            'location' => 'Surat Textile Market',
+            'address'  => 'Shop 204, Millennium Ring Road',
+        ]);
+    }
+
+    /**
+     * Test board canonical product endpoint returns supplier details in offers.
+     */
+    public function test_board_canonical_product_api_returns_supplier_details(): void
+    {
+        $user = User::factory()->create(['role' => 'user', 'status' => 'active']);
+
+        $group = TelegramGroup::create([
+            'telegram_id' => 555444333,
+            'title'       => 'API Supplier Group',
+            'invite_link' => 'https://t.me/api_supplier',
+            'phone'       => '+91 99999 88888',
+            'location'    => 'Delhi Wholesale Hub',
+            'address'     => 'Sadar Bazaar, Delhi',
+            'is_active'   => true,
+        ]);
+
+        $canonical = CanonicalProduct::create([
+            'canonical_key'    => 'api_supplier_prod_key',
+            'name'             => 'API Supplier Product',
+            'cheapest_price'   => 450.00,
+            'offers_count'     => 1,
+            'last_observed_at' => now(),
+        ]);
+
+        Product::create([
+            'canonical_product_id' => $canonical->id,
+            'group_id'             => $group->id,
+            'product_key'          => 'api_offer_raw_key',
+            'product_name'         => 'API Supplier Product Offer',
+            'latest_price'         => 450.00,
+            'latest_message_id'    => 201,
+            'first_seen_at'        => now(),
+            'last_updated_at'      => now(),
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/canonical-products/{$canonical->id}");
+        $response->assertOk();
+
+        $data = $response->json();
+        $this->assertNotEmpty($data['product']['offers']);
+        $firstOffer = $data['product']['offers'][0];
+        $this->assertEquals('+91 99999 88888', $firstOffer['group_phone']);
+        $this->assertEquals('Delhi Wholesale Hub', $firstOffer['group_location']);
+        $this->assertEquals('Sadar Bazaar, Delhi', $firstOffer['group_address']);
+    }
 }

@@ -229,9 +229,18 @@ class AdminGroupController extends Controller
         $validated = $request->validate([
             'title'       => ['required', 'string', 'max:255'],
             'invite_link' => ['nullable', 'string', 'max:255'],
+            'phone'       => ['nullable', 'string', 'max:50'],
+            'location'    => ['nullable', 'string', 'max:100'],
+            'address'     => ['nullable', 'string', 'max:500'],
         ]);
 
-        $old = ['title' => $group->title, 'invite_link' => $group->invite_link];
+        $old = [
+            'title'       => $group->title,
+            'invite_link' => $group->invite_link,
+            'phone'       => $group->phone,
+            'location'    => $group->location,
+            'address'     => $group->address,
+        ];
         $group->update($validated);
 
         AdminActivityLog::record(
