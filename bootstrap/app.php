@@ -25,4 +25,35 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 419) {
+                return null;
+            }
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'error' => 'Your security session has expired. Please refresh the page.',
+                    'code'  => 419,
+                ], 419);
+            }
+
+            if ($request->is('admin*')) {
+                if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->isAdmin()) {
+                    return back()->with('error', 'Your session security token refreshed. Please submit your changes again.');
+                }
+
+                return redirect()->route('admin.login')->withErrors([
+                    'email' => 'Your session expired due to inactivity. Please sign in to continue.',
+                ]);
+            }
+
+            if (\Illuminate\Support\Facades\Auth::check()) {
+                return back()->with('error', 'Your session token refreshed. Please try again.');
+            }
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your session expired. Please sign in to continue.',
+            ]);
+        });
     })->create();

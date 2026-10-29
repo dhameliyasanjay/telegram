@@ -40,13 +40,13 @@ class EnsureAdmin
                 return response()->json(['error' => 'Forbidden. Administrator privileges required.'], 403);
             }
 
-            // Cleanly log out standard user and redirect to Admin Login with clear message
+            // Cleanly log out standard user and redirect to Admin Login with clear guidance
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()->route('admin.login')->withErrors([
-                'email' => 'Access Restricted: The account you were signed in with is a standard customer account. Please enter your Administrator credentials.',
+                'email' => 'Access Restricted: You were signed in with a standard customer account. Please enter your Administrator credentials to access the Admin Panel.',
             ]);
         }
 

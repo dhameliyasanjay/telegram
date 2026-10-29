@@ -162,21 +162,14 @@
       </div>
     </div>
 
-    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-      @csrf
-      <button type="submit" class="btn btn-primary">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        Sign Out & Log In as Admin
-      </button>
-    </form>
+    <a href="{{ route('admin.login') }}" class="btn btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Sign In to Admin Portal
+    </a>
 
     <a href="{{ route('board') }}" class="btn btn-secondary">
       Return to Customer Product Dashboard
     </a>
-
-    <div style="margin-top: 20px; font-size: 0.78rem; color: var(--text-dim);">
-      Admin Accounts: <strong>dhamelyasanjay1994@gmail.com</strong>, <strong>admin@telegram.local</strong> (pass: <code>password123</code>)
-    </div>
   </div>
 
 </body>

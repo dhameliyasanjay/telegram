@@ -6,6 +6,7 @@
   <title>@yield('title', 'Admin Dashboard') — Price Monitor Admin</title>
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <meta name="theme-color" content="#3b82f6">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>

@@ -405,4 +405,24 @@ class AdminTest extends TestCase
         $resSyncAll = $this->actingAs($user)->postJson('/api/groups/sync-all');
         $resSyncAll->assertForbidden();
     }
+
+    /**
+     * Test TokenMismatchException redirects gracefully instead of raw 419 error.
+     */
+    public function test_token_mismatch_exception_is_handled_gracefully(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+        $this->actingAs($admin);
+
+        $request = \Illuminate\Http\Request::create('/admin/users/1/role', 'POST');
+        $request->headers->set('referer', 'http://localhost/admin/users');
+        $request->setLaravelSession(app('session.store'));
+        app('url')->setRequest($request);
+
+        $handler = app(\Illuminate\Contracts\Debug\ExceptionHandler::class);
+        $response = $handler->render($request, new \Symfony\Component\HttpKernel\Exception\HttpException(419, 'CSRF token mismatch.'));
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('http://localhost/admin/users', $response->getTargetUrl());
+    }
 }

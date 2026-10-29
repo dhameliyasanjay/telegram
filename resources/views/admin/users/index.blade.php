@@ -156,7 +156,7 @@
       <button type="button" onclick="closeSubscriptionModal()" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.2rem;">✕</button>
     </div>
 
-    <form id="subForm" method="POST">
+    <form id="subForm" method="POST" onsubmit="submitSubForm(event)">
       @csrf
       <p id="subModalUserName" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;"></p>
 
@@ -176,7 +176,7 @@
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
         <button type="button" class="btn btn-secondary" onclick="closeSubscriptionModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Apply Update</button>
+        <button type="submit" id="subSubmitBtn" class="btn btn-primary">Apply Update</button>
       </div>
     </form>
   </div>
@@ -190,7 +190,7 @@
       <button type="button" onclick="closeRoleModal()" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.2rem;">✕</button>
     </div>
 
-    <form id="roleForm" method="POST">
+    <form id="roleForm" method="POST" onsubmit="submitRoleForm(event)">
       @csrf
       <p id="roleModalUserName" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;"></p>
 
@@ -204,7 +204,7 @@
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
         <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Update Role</button>
+        <button type="submit" id="roleSubmitBtn" class="btn btn-primary">Update Role</button>
       </div>
     </form>
   </div>
@@ -213,22 +213,118 @@
 
 @section('scripts')
 <script>
+  function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  }
+
+  function syncCsrf(form) {
+    const token = getCsrfToken();
+    if (token) {
+      const input = form.querySelector('input[name="_token"]');
+      if (input) input.value = token;
+    }
+  }
+
   function openSubscriptionModal(id, name) {
-    document.getElementById('subForm').action = `/admin/users/${id}/subscription`;
+    const form = document.getElementById('subForm');
+    form.action = `/admin/users/${id}/subscription`;
+    syncCsrf(form);
     document.getElementById('subModalUserName').textContent = `Updating account access for: ${name}`;
     document.getElementById('subModal').style.display = 'flex';
   }
   function closeSubscriptionModal() {
     document.getElementById('subModal').style.display = 'none';
   }
+
   function openRoleModal(id, name, currentRole) {
-    document.getElementById('roleForm').action = `/admin/users/${id}/role`;
+    const form = document.getElementById('roleForm');
+    form.action = `/admin/users/${id}/role`;
+    syncCsrf(form);
     document.getElementById('roleModalUserName').textContent = `Changing role for: ${name}`;
     document.getElementById('roleSelect').value = currentRole;
     document.getElementById('roleModal').style.display = 'flex';
   }
   function closeRoleModal() {
     document.getElementById('roleModal').style.display = 'none';
+  }
+
+  async function submitRoleForm(e) {
+    e.preventDefault();
+    const form = document.getElementById('roleForm');
+    const btn = document.getElementById('roleSubmitBtn');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    syncCsrf(form);
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 419) {
+          alert('Security session refreshed. Reloading page...');
+          window.location.reload();
+        } else {
+          alert(data.error || 'Failed to update role. Please try again.');
+          btn.disabled = false;
+          btn.textContent = oldText;
+        }
+      }
+    } catch (err) {
+      // If network or unexpected issue, submit normally as fallback
+      form.submit();
+    }
+  }
+
+  async function submitSubForm(e) {
+    e.preventDefault();
+    const form = document.getElementById('subForm');
+    const btn = document.getElementById('subSubmitBtn');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Applying...';
+
+    syncCsrf(form);
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 419) {
+          alert('Security session refreshed. Reloading page...');
+          window.location.reload();
+        } else {
+          alert(data.error || 'Failed to update subscription. Please try again.');
+          btn.disabled = false;
+          btn.textContent = oldText;
+        }
+      }
+    } catch (err) {
+      form.submit();
+    }
   }
 </script>
 @endsection
