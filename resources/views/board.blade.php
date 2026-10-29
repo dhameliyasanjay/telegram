@@ -664,17 +664,18 @@ body {
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <div class="search-wrap">
+      <div class="search-wrap" style="position: relative;">
         <span class="search-icon">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" id="searchInput" placeholder="Search product name, brand, model, SKU…" oninput="debounceSearch()">
+        <input type="text" id="searchInput" placeholder="Search product name, brand, model, SKU…" oninput="onSearchInput(this)" style="padding-right: 32px;">
+        <button type="button" id="searchClearBtn" onclick="clearSearchInput()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.08); border:none; border-radius:50%; width:20px; height:20px; color:var(--text-muted); cursor:pointer; font-size:12px; line-height:1; display:none; align-items:center; justify-content:center;" title="Clear search">✕</button>
       </div>
 
       <div class="price-range-filter" title="Filter by Price Range">
-        <input type="number" id="minPriceInput" placeholder="Min ₹" min="0" oninput="debounceSearch()" class="filter-num-input">
+        <input type="number" id="minPriceInput" placeholder="Min ₹" min="0" oninput="onPriceRangeInput()" class="filter-num-input">
         <span class="filter-sep">–</span>
-        <input type="number" id="maxPriceInput" placeholder="Max ₹" min="0" oninput="debounceSearch()" class="filter-num-input">
+        <input type="number" id="maxPriceInput" placeholder="Max ₹" min="0" oninput="onPriceRangeInput()" class="filter-num-input">
       </div>
 
       <input type="file" id="photoFilterInput" style="display:none" accept="image/*" onchange="handlePhotoFilter(event)">
@@ -694,9 +695,6 @@ body {
         <option value="offers">Most Competing Groups</option>
         <option value="relevance">Best Match (Relevance)</option>
       </select>
-
-      <button class="btn btn-ghost btn-sm" onclick="clearAllFilters()" title="Reset all filters">Reset</button>
-      <button class="btn btn-ghost btn-sm" onclick="loadBoard()">Refresh</button>
     </div>
 
     <!-- Grid -->
@@ -2011,7 +2009,39 @@ async function addGroup() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-function debounceSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadBoard(1), 400); }
+function onSearchInput(input) {
+  const val = input.value;
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) {
+    clearBtn.style.display = val.length > 0 ? 'inline-flex' : 'none';
+  }
+  clearTimeout(searchTimer);
+  // If text is cleared, instantly restore original list without waiting
+  if (val.trim() === '') {
+    searchTimer = setTimeout(() => resetBoard(), 50);
+  } else {
+    // Instant responsive AJAX search (like Flipkart)
+    searchTimer = setTimeout(() => resetBoard(), 200);
+  }
+}
+
+function clearSearchInput() {
+  const input = document.getElementById('searchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.style.display = 'none';
+  resetBoard();
+}
+
+function onPriceRangeInput() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => resetBoard(), 250);
+}
+
+function debounceSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => resetBoard(), 200); }
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]').content; }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function timeAgo(iso) {
