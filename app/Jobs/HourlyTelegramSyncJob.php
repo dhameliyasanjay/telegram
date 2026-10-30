@@ -56,22 +56,17 @@ class HourlyTelegramSyncJob implements ShouldQueue
             return;
         }
 
-        // ── 1. Connect to Telegram MTProto Client ────────────────────────────
+        // ── 1. Connect to Telegram MTProto Client (Only if private invite links exist) ──
+        $hasInviteLinks = $groups->contains(fn($g) => $telegramClient->isInviteLink($g->invite_link));
         $client = null;
-        try {
-            $client = $telegramClient->getClient();
-            $client->start();
-        } catch (\Throwable $e) {
-            Log::error("HourlyTelegramSyncJob: Failed to connect Telegram client: " . $e->getMessage());
-
-            if (preg_match('/FLOOD_WAIT_(\d+)/i', $e->getMessage(), $m)) {
-                $seconds = (int) $m[1];
-                Log::warning("HourlyTelegramSyncJob: FLOOD_WAIT_{$seconds}s. Releasing job with delay.");
-                $this->release($seconds + 10);
-                return;
+        if ($hasInviteLinks) {
+            try {
+                $client = $telegramClient->getClient();
+                $client->start();
+            } catch (\Throwable $e) {
+                Log::info("HourlyTelegramSyncJob: MTProto start notice: " . $e->getMessage() . " - Continuing with fast channel web crawler.");
+                $client = null;
             }
-
-            throw $e;
         }
 
         // ── 2. Ingest Messages from Each Group ───────────────────────────────
@@ -79,6 +74,7 @@ class HourlyTelegramSyncJob implements ShouldQueue
 
         foreach ($groups as $group) {
             try {
+                $group->update(['sync_status' => 'syncing']);
                 Log::info("HourlyTelegramSyncJob: Fetching messages for [{$group->id}] {$group->title} (Limit: {$this->messageLimit})");
                 $messages = $telegramClient->getMessages($client, $group->invite_link, $this->messageLimit);
                 $summary['messages_scanned'] += count($messages);
@@ -111,7 +107,11 @@ class HourlyTelegramSyncJob implements ShouldQueue
                     }
                 }
 
-                $group->update(['last_synced_at' => now()]);
+                $group->update([
+                    'last_synced_at' => now(),
+                    'sync_status'    => 'idle',
+                    'last_error'     => null,
+                ]);
                 $summary['groups_synced']++;
 
                 // Small delay between groups to avoid Telegram rate limits
@@ -120,6 +120,10 @@ class HourlyTelegramSyncJob implements ShouldQueue
             } catch (\Throwable $groupEx) {
                 $summary['errors']++;
                 Log::error("HourlyTelegramSyncJob: Error syncing group [{$group->id}] {$group->title}: " . $groupEx->getMessage());
+                $group->update([
+                    'sync_status' => 'idle',
+                    'last_error'  => mb_substr($groupEx->getMessage(), 0, 500),
+                ]);
             }
         }
 

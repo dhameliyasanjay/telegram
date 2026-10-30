@@ -177,6 +177,14 @@ class AdminGroupController extends Controller
 
         SyncTelegramGroup::dispatch($group, $limit, $full);
 
+        if (!app()->environment('testing')) {
+            $artisan = base_path('artisan');
+            $php = $this->getPhpBinary();
+            $log = storage_path('logs/group-sync.log');
+            $fullFlag = $full ? '--full' : '';
+            exec("nohup {$php} {$artisan} telegram:sync --group={$group->id} --limit={$limit} {$fullFlag} >> {$log} 2>&1 &");
+        }
+
         AdminActivityLog::record(
             'group_sync_triggered',
             "Triggered manual sync for [{$group->title}] (Limit: {$limit}, Full: " . ($full ? 'Yes' : 'No') . ")",
@@ -203,6 +211,14 @@ class AdminGroupController extends Controller
         foreach ($groups as $group) {
             SyncTelegramGroup::dispatch($group, 100);
             $dispatched++;
+        }
+
+        // Trigger the complete automated sync in background so all groups update immediately
+        if (!app()->environment('testing')) {
+            $artisan = base_path('artisan');
+            $php = $this->getPhpBinary();
+            $log = storage_path('logs/hourly-sync.log');
+            exec("nohup {$php} {$artisan} telegram:hourly-sync --limit=100 >> {$log} 2>&1 &");
         }
 
         AdminActivityLog::record(
@@ -301,6 +317,19 @@ class AdminGroupController extends Controller
         }
 
         return redirect()->route('admin.groups.index')->with('success', $msg);
+    }
+
+    /**
+     * Resolve the CLI PHP executable path reliably across CLI and PHP-FPM environments.
+     */
+    private function getPhpBinary(): string
+    {
+        $finder = new \Symfony\Component\Process\PhpExecutableFinder();
+        $php = $finder->find();
+        if (!$php || str_contains($php, 'fpm')) {
+            $php = is_executable('/usr/bin/php') ? '/usr/bin/php' : (PHP_BINDIR . '/php');
+        }
+        return $php ?: 'php';
     }
 }
 

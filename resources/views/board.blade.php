@@ -642,6 +642,10 @@ body.modal-open {
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
           <span>Dashboard</span>
         </a>
+        <a href="javascript:void(0)" onclick="openSendGroupModal()" class="nav-item" id="navSendGroupBtn">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          <span>Send Group Link</span>
+        </a>
         {{-- <a href="/catalogue" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
           <span>Catalogue</span>
@@ -723,6 +727,12 @@ body.modal-open {
         </div>
       </div>
       <div class="header-actions">
+        @php
+          $settingService = app(\App\Services\SettingService::class);
+          $dynamicPlans = $settingService->getSubscriptionPlans();
+          $starterPrice = (float) ($dynamicPlans['1_month']['amount'] ?? 49.00);
+          $currencySymbol = (string) $settingService->get('currency_symbol', '₹');
+        @endphp
         @if(Auth::check() && Auth::user()->isAdmin())
           <button class="btn btn-ghost" onclick="syncAllGroups(event)" id="syncAllBtn">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -746,7 +756,7 @@ body.modal-open {
             @else
               <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
               <span style="color: #f87171; font-weight: 600;">Trial Expired</span>
-              <span style="color: #60a5fa; font-weight: 600; text-decoration: underline; margin-left: 4px;">Subscribe ₹49</span>
+              <span style="color: #60a5fa; font-weight: 600; text-decoration: underline; margin-left: 4px;">Subscribe {{ $currencySymbol }}{{ number_format($starterPrice) }}</span>
             @endif
           </div>
         @endif
@@ -834,6 +844,68 @@ body.modal-open {
   </div>
 </div>
 @endif
+
+<!-- Send Group Link Modal (For Sellers, Wholesalers & Users) -->
+<div class="modal-bg" id="sendGroupModal" onclick="if(event.target===this)closeSendGroupModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; box-sizing: border-box; border-radius: 16px; padding: 26px 24px; background: #18181b; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
+    
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </div>
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin:0;">Send Telegram Group Link</h2>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Submit a wholesale group/channel to track prices</div>
+        </div>
+      </div>
+      <button type="button" onclick="closeSendGroupModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; line-height:1;">✕</button>
+    </div>
+
+    <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.18); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; font-size: 0.82rem; color: #93c5fd; line-height: 1.5;">
+      💡 <strong>Are you a seller or wholesaler?</strong> Paste your Telegram channel or group link below. Our admin team will review it, check products, and connect it to Price Monitor!
+    </div>
+
+    <form id="sendGroupForm" onsubmit="event.preventDefault(); submitGroupLink();">
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; font-weight: 600;">Telegram Group or Channel Link <span style="color:#ef4444;">*</span></label>
+        <input type="text" id="sendGroupLinkInput" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. https://t.me/surat_wholesale_market or @channelname">
+        <span style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; display: block;">Supports public t.me links or private invite links (t.me/+...).</span>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; font-weight: 600;">Category / Product Types (Optional)</label>
+        <input type="text" id="sendGroupNotesInput" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.9rem;" placeholder="e.g. Electronics, Kurtis, Shoes, Home Appliances">
+      </div>
+
+      <div id="sendGroupAlert" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 24px;">
+        <button type="button" class="btn btn-ghost" onclick="closeSendGroupModal()">Cancel</button>
+        <button type="submit" id="sendGroupSubmitBtn" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4);">
+          <span id="sendGroupSubmitBtnText">Send Link for Review</span> &rarr;
+        </button>
+      </div>
+    </form>
+
+    <!-- My Previously Submitted Links -->
+    <div style="border-top: 1px solid var(--border); padding-top: 18px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <div style="font-size: 0.85rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px;">My Submitted Links</div>
+        <button type="button" onclick="loadMySubmittedGroupLinks()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div id="mySubmittedLinksList" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 0.8rem; color: var(--text-dim); text-align: center; padding: 16px;">
+          No links submitted yet.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <!-- Subscription Plan Modal -->
 @php
@@ -997,18 +1069,18 @@ body.modal-open {
       </div>
 
       <div style="margin-bottom: 12px;">
-        <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;" id="subOrderTitleText">Activate 1 Month Pro Plan (₹49)</div>
+        <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;" id="subOrderTitleText">Activate {{ $dynamicPlans['1_month']['name'] ?? '1 Month' }} Pro Plan ({{ $currencySymbol }}{{ number_format($starterPrice) }})</div>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Complete payment via Razorpay to activate full unlimited Telegram price monitoring.</p>
       </div>
 
       <!-- Selected Plan Summary Box -->
       <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <span style="font-size: 0.88rem; color: #fff; font-weight: 600;" id="subOrderSelectedPlanName">Plan: 1 Month (30 Days)</span>
+          <span style="font-size: 0.88rem; color: #fff; font-weight: 600;" id="subOrderSelectedPlanName">Plan: {{ $dynamicPlans['1_month']['name'] ?? '1 Month' }} ({{ $dynamicPlans['1_month']['duration_days'] ?? 30 }} Days)</span>
           <div style="font-size: 0.72rem; color: #93c5fd; margin-top: 2px;">✓ Telegram Price Monitor Full Access • Instant Activation</div>
         </div>
         <div style="text-align: right;">
-          <span style="font-size: 1.25rem; color: #60a5fa; font-weight: 800;" id="subOrderSelectedPlanPrice">₹49</span>
+          <span style="font-size: 1.25rem; color: #60a5fa; font-weight: 800;" id="subOrderSelectedPlanPrice">{{ $currencySymbol }}{{ number_format($starterPrice) }}</span>
           <div><a href="javascript:void(0)" onclick="showPlanCardsStep()" style="color:#93c5fd; font-size:0.72rem; text-decoration:underline;">Change Plan</a></div>
         </div>
       </div>
@@ -1062,7 +1134,7 @@ body.modal-open {
           <button type="button" class="btn btn-ghost" onclick="showPlanCardsStep()">Back</button>
           <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; font-weight: 600; padding: 11px 22px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.4); display: inline-flex; align-items: center; gap: 8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            <span id="subOrderSubmitBtnText">Pay with Razorpay (₹49)</span> &rarr;
+            <span id="subOrderSubmitBtnText">Pay with Razorpay ({{ $currencySymbol }}{{ number_format($starterPrice) }})</span> &rarr;
           </button>
         </div>
         <div style="font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 10px;">
@@ -1078,7 +1150,7 @@ body.modal-open {
       </div>
       <h3 style="font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 6px;">Payment Verified & Pro Active!</h3>
       <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
-        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your subscription for <strong id="subSuccessDuration" style="color:#60a5fa;">1 Month (30 Days)</strong> has been activated.
+        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your subscription for <strong id="subSuccessDuration" style="color:#60a5fa;">{{ $dynamicPlans['1_month']['name'] ?? '1 Month' }} ({{ $dynamicPlans['1_month']['duration_days'] ?? 30 }} Days)</strong> has been activated.
       </p>
 
       <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
@@ -1088,7 +1160,7 @@ body.modal-open {
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span>Plan Amount Paid:</span>
-          <strong id="subSuccessAmount" style="color: #fff;">₹49.00</strong>
+          <strong id="subSuccessAmount" style="color: #fff;">{{ $currencySymbol }}{{ number_format($starterPrice, 2) }}</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span>Access Valid Until:</span>
@@ -1134,7 +1206,7 @@ body.modal-open {
     <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; text-align: left;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
         <span style="font-weight: 600; color: #fff; font-size: 0.95rem;">Price Monitor Pro</span>
-        <span style="font-weight: 700; color: #60a5fa; font-size: 1.25rem;">₹49 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">/ 30 Days</span></span>
+        <span style="font-weight: 700; color: #60a5fa; font-size: 1.25rem;">{{ $currencySymbol }}{{ number_format($starterPrice) }} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">/ {{ $dynamicPlans['1_month']['duration_days'] ?? 30 }} Days</span></span>
       </div>
       <div style="font-size: 0.8rem; color: #a1a1aa; line-height: 1.6;">
         ✓ Unblur all live prices & lowest offer indicators<br>
@@ -1866,7 +1938,7 @@ function renderCompareDrawer(p) {
           Wholesale Supplier Intelligence Locked
         </div>
         <div style="color: var(--text-muted); font-size: 0.82rem; line-height: 1.4;">
-          Your free trial has ended. Subscribe for ₹49 to unlock direct Telegram supplier channels, unblurred prices, and verified supplier contact details.
+          Your free trial has ended. Subscribe for {{ $currencySymbol }}{{ number_format($starterPrice) }} to unlock direct Telegram supplier channels, unblurred prices, and verified supplier contact details.
         </div>
       </div>
       <button onclick="openSubscriptionPlanModal(); showPlanCardsStep();" class="btn btn-primary" style="white-space: nowrap; padding: 10px 18px; font-size: 0.88rem; font-weight: 600; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
@@ -2101,6 +2173,152 @@ function closeAddModal() {
     m.classList.remove('open');
     document.getElementById('addError').style.display='none';
     lockBodyScroll(false);
+  }
+}
+
+// ── Send Group Link Modal (For Sellers & Users) ───────────────────────────
+function openSendGroupModal() {
+  const m = document.getElementById('sendGroupModal');
+  if (m) {
+    m.classList.add('open');
+    lockBodyScroll(true);
+    const inp = document.getElementById('sendGroupLinkInput');
+    if (inp) {
+      setTimeout(() => inp.focus(), 150);
+    }
+    loadMySubmittedGroupLinks();
+  }
+}
+
+function closeSendGroupModal() {
+  const m = document.getElementById('sendGroupModal');
+  if (m) {
+    m.classList.remove('open');
+    lockBodyScroll(false);
+    const alert = document.getElementById('sendGroupAlert');
+    if (alert) alert.style.display = 'none';
+  }
+}
+
+async function submitGroupLink() {
+  const linkInp = document.getElementById('sendGroupLinkInput');
+  const notesInp = document.getElementById('sendGroupNotesInput');
+  const btn = document.getElementById('sendGroupSubmitBtn');
+  const btnText = document.getElementById('sendGroupSubmitBtnText');
+  const alert = document.getElementById('sendGroupAlert');
+
+  const link = linkInp ? linkInp.value.trim() : '';
+  const notes = notesInp ? notesInp.value.trim() : '';
+
+  if (!link || link.length < 4) {
+    if (alert) {
+      alert.style.display = 'block';
+      alert.style.background = 'rgba(239, 68, 68, 0.12)';
+      alert.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      alert.style.color = '#f87171';
+      alert.innerText = 'Please enter a valid Telegram group or channel link.';
+    }
+    return;
+  }
+
+  if (alert) alert.style.display = 'none';
+  if (btn) {
+    btn.disabled = true;
+    if (btnText) btnText.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;"></span> Sending...';
+  }
+
+  try {
+    const res = await fetch('/user/group-submissions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        invite_link: link,
+        notes: notes
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Failed to submit group link'));
+    }
+
+    if (linkInp) linkInp.value = '';
+    if (notesInp) notesInp.value = '';
+
+    if (alert) {
+      alert.style.display = 'block';
+      alert.style.background = 'rgba(16, 185, 129, 0.12)';
+      alert.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      alert.style.color = '#34d399';
+      alert.innerText = data.message || 'Group link submitted successfully! Admin will review and connect it.';
+    }
+
+    toast(data.message || 'Group link sent to admin for review!', 'success');
+    loadMySubmittedGroupLinks();
+
+  } catch (err) {
+    if (alert) {
+      alert.style.display = 'block';
+      alert.style.background = 'rgba(239, 68, 68, 0.12)';
+      alert.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      alert.style.color = '#f87171';
+      alert.innerText = err.message || 'Error submitting group link. Please try again.';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      if (btnText) btnText.innerText = 'Send Link for Review';
+    }
+  }
+}
+
+async function loadMySubmittedGroupLinks() {
+  const container = document.getElementById('mySubmittedLinksList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/user/group-submissions', {
+      headers: { 'Accept': 'application/json' }
+    });
+    const data = await res.json();
+
+    if (data.success && data.submissions && data.submissions.length > 0) {
+      container.innerHTML = data.submissions.map(sub => {
+        let badgeHtml = '';
+        if (sub.status === 'pending') {
+          badgeHtml = '<span style="font-size:0.7rem; background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); padding:2px 8px; border-radius:12px;">⏳ Pending</span>';
+        } else if (sub.status === 'approved') {
+          badgeHtml = '<span style="font-size:0.7rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px;">✓ Connected</span>';
+        } else if (sub.status === 'rejected') {
+          badgeHtml = '<span style="font-size:0.7rem; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:12px;">✕ Rejected</span>';
+        }
+
+        const dateStr = sub.created_at ? new Date(sub.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '';
+        const groupTitle = sub.telegram_group ? ` • <strong style="color:#34d399;">${sub.telegram_group.title}</strong>` : (sub.group_title ? ` • <strong style="color:#34d399;">${sub.group_title}</strong>` : '');
+
+        return `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="overflow: hidden;">
+              <div style="font-size: 0.82rem; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;">
+                ${sub.invite_link}
+              </div>
+              <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 2px;">
+                ${dateStr}${groupTitle}${sub.notes ? ` • <em>${sub.notes}</em>` : ''}
+              </div>
+            </div>
+            <div>${badgeHtml}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      container.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-dim); text-align: center; padding: 16px;">No links submitted yet.</div>';
+    }
+  } catch (err) {
+    console.error('Failed to load submitted links', err);
   }
 }
 

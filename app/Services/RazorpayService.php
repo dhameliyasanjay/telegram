@@ -37,7 +37,10 @@ class RazorpayService
         return empty($this->keyId)
             || empty($this->keySecret)
             || str_contains($this->keyId, 'placeholder')
-            || str_contains($this->keySecret, 'placeholder');
+            || str_contains($this->keySecret, 'placeholder')
+            || str_starts_with($this->keyId, 'rzp_test_testkey')
+            || app()->runningUnitTests()
+            || app()->environment('testing');
     }
 
     /**
@@ -86,7 +89,7 @@ class RazorpayService
         }
 
         // 3. Create order via official Razorpay SDK or safe mock when keys are placeholder
-        if ($this->isPlaceholder() || app()->environment('testing')) {
+        if ($this->isPlaceholder() || app()->runningUnitTests() || app()->environment('testing')) {
             $razorpayOrderId = 'order_mock_' . bin2hex(random_bytes(8));
             $orderData = [
                 'id'       => $razorpayOrderId,
@@ -119,7 +122,7 @@ class RazorpayService
                     'order_id' => $order->id,
                     'amount'   => $amountInPaise,
                 ]);
-                throw new Exception('Unable to create payment order with Razorpay: ' . $e->getMessage(), $e->getCode(), $e);
+                throw new Exception('Unable to create payment order with Razorpay: ' . $e->getMessage(), (int) $e->getCode(), $e);
             }
         }
 
@@ -197,7 +200,7 @@ class RazorpayService
      */
     public function fetchPayment(string $paymentId): ?array
     {
-        if ($this->isPlaceholder() || app()->environment('testing')) {
+        if ($this->isPlaceholder() || app()->runningUnitTests() || app()->environment('testing')) {
             return [
                 'id'       => $paymentId,
                 'status'   => 'captured',

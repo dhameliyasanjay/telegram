@@ -115,6 +115,11 @@ class User extends Authenticatable
         return $this->hasMany(SubscriptionPayment::class);
     }
 
+    public function groupSubmissions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(GroupSubmission::class);
+    }
+
     /**
      * Expire all trial and paid subscription access immediately.
      */

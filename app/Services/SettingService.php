@@ -62,9 +62,9 @@ class SettingService
             }
         }
 
-        // If a custom 1_month price was set via subscription_price, respect it if subscription_plans was not explicitly saved
-        $customPrice = (float) $this->get('subscription_price', 0);
-        if ($customPrice > 0 && empty($saved)) {
+        // Keep 1_month amount strictly in sync with subscription_price setting if present
+        $customPrice = (float) $this->getRawSetting('subscription_price');
+        if ($customPrice > 0 && isset($plans['1_month'])) {
             $plans['1_month']['amount'] = $customPrice;
         }
 
@@ -72,13 +72,37 @@ class SettingService
     }
 
     /**
+     * Get raw setting value directly from database.
+     */
+    public function getRawSetting(string $key): mixed
+    {
+        $setting = Setting::where('key', $key)->first();
+        return $setting ? $setting->cast_value : null;
+    }
+
+    /**
      * Get a setting by key, with default fallback.
      */
     public function get(string $key, mixed $default = null): mixed
     {
+        // Backward compatibility: If asking for sync_interval_hours, compute from sync_interval_minutes
+        if ($key === 'sync_interval_hours') {
+            $mins = (int) $this->get('sync_interval_minutes', 0);
+            if ($mins > 0) {
+                return (int) max(1, round($mins / 60));
+            }
+        }
+
         return Cache::remember(self::CACHE_PREFIX . $key, 3600, function () use ($key, $default) {
             $setting = Setting::where('key', $key)->first();
             if (!$setting) {
+                // Fallback for sync_interval_minutes if old sync_interval_hours existed
+                if ($key === 'sync_interval_minutes') {
+                    $hoursSetting = Setting::where('key', 'sync_interval_hours')->first();
+                    if ($hoursSetting) {
+                        return ((int) $hoursSetting->cast_value) * 60;
+                    }
+                }
                 return $default;
             }
 
@@ -87,7 +111,7 @@ class SettingService
     }
 
     /**
-     * Set / update a setting.
+     * Set / update a setting with cross-setting synchronization.
      */
     public function set(string $key, mixed $value, ?string $type = null, ?string $group = null, ?string $label = null, ?string $description = null): Setting
     {
@@ -119,6 +143,56 @@ class SettingService
         $setting->save();
         Cache::forget(self::CACHE_PREFIX . $key);
 
+        // Cross-synchronize subscription_price and subscription_plans
+        if ($key === 'subscription_price') {
+            $price = (float) $value;
+            $savedRow = Setting::where('key', 'subscription_plans')->first();
+            $plans = $savedRow ? json_decode($savedRow->value, true) : self::DEFAULT_PLANS;
+            if (!is_array($plans)) {
+                $plans = self::DEFAULT_PLANS;
+            }
+            if (isset($plans['1_month']) && (float) ($plans['1_month']['amount'] ?? 0) !== $price) {
+                $plans['1_month']['amount'] = $price;
+                Setting::updateOrCreate(
+                    ['key' => 'subscription_plans'],
+                    [
+                        'value' => json_encode($plans),
+                        'type' => 'json',
+                        'group' => 'subscription',
+                        'label' => 'Subscription Multi-Tier Plans',
+                    ]
+                );
+                Cache::forget(self::CACHE_PREFIX . 'subscription_plans');
+            }
+        } elseif ($key === 'subscription_plans' && is_array($value) && isset($value['1_month']['amount'])) {
+            $price = (float) $value['1_month']['amount'];
+            Setting::updateOrCreate(
+                ['key' => 'subscription_price'],
+                [
+                    'value' => (string) $price,
+                    'type' => 'float',
+                    'group' => 'subscription',
+                    'label' => 'Subscription Plan Price (₹)',
+                    'description' => 'Monthly subscription plan price in Indian Rupees (INR).',
+                ]
+            );
+            Cache::forget(self::CACHE_PREFIX . 'subscription_price');
+        } elseif ($key === 'sync_interval_minutes') {
+            $mins = max(1, (int) $value);
+            $hours = max(1, (int) round($mins / 60));
+            Setting::updateOrCreate(
+                ['key' => 'sync_interval_hours'],
+                [
+                    'value' => (string) $hours,
+                    'type' => 'integer',
+                    'group' => 'system',
+                    'label' => 'Automated Sync Interval (Hours)',
+                    'description' => 'Frequency in hours for the automated Telegram channel message crawler.',
+                ]
+            );
+            Cache::forget(self::CACHE_PREFIX . 'sync_interval_hours');
+        }
+
         return $setting;
     }
 
@@ -133,6 +207,10 @@ class SettingService
         $grouped = [];
 
         foreach ($all as $item) {
+            // Omit raw JSON complex structure and legacy duplicate from generic key-value list
+            if ($item->key === 'subscription_plans' || $item->key === 'sync_interval_hours') {
+                continue;
+            }
             $grouped[$item->group][] = $item;
         }
 
@@ -185,12 +263,12 @@ class SettingService
 
             // System & Synchronization
             [
-                'key' => 'sync_interval_hours',
-                'value' => '1',
+                'key' => 'sync_interval_minutes',
+                'value' => '15',
                 'type' => 'integer',
                 'group' => 'system',
-                'label' => 'Automated Sync Interval (Hours)',
-                'description' => 'Frequency in hours for the automated Telegram channel message crawler.',
+                'label' => 'Automated Sync Interval (Minutes)',
+                'description' => 'Frequency in minutes for automated Telegram channel synchronization and product crawling (e.g. 5, 10, 15, 30, 60).',
             ],
             [
                 'key' => 'search_pagination_limit',

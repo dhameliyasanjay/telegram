@@ -60,8 +60,16 @@ class SyncTelegramGroup implements ShouldQueue
         $this->group->update(['sync_status' => 'syncing']);
 
         try {
-            $client = $telegramClient->getClient();
-            $client->start();
+            $client = null;
+            if ($telegramClient->isInviteLink($this->group->invite_link)) {
+                try {
+                    $client = $telegramClient->getClient();
+                    $client->start();
+                } catch (\Throwable $e) {
+                    Log::info("SyncTelegramGroup MTProto notice: {$e->getMessage()}. Using fast web channel crawler.");
+                    $client = null;
+                }
+            }
 
             $messages = $telegramClient->getMessages($client, $this->group->invite_link, $this->limit, $this->offsetId);
             $stats    = ['new' => 0, 'updated' => 0, 'skipped' => 0];

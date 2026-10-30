@@ -53,6 +53,10 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/subscription/razorpay/order', [RazorpayPaymentController::class, 'createOrder'])->name('subscription.razorpay.order');
     Route::post('/subscription/razorpay/verify', [RazorpayPaymentController::class, 'verifyPayment'])->name('subscription.razorpay.verify');
     Route::get('/subscription/orders/{order}/status', [RazorpayPaymentController::class, 'getStatus'])->name('subscription.orders.status');
+
+    // User Telegram Group Submissions
+    Route::post('/user/group-submissions', [\App\Http\Controllers\GroupSubmissionController::class, 'store'])->name('user.group-submissions.store');
+    Route::get('/user/group-submissions', [\App\Http\Controllers\GroupSubmissionController::class, 'index'])->name('user.group-submissions.index');
 });
 
 // ── Razorpay Webhook (Exempt from CSRF & Session Auth) ──────────────────────
@@ -78,6 +82,13 @@ Route::prefix('admin')->middleware(['admin'])->name('admin.')->group(function ()
     Route::post('/telegram-groups/{id}/sync', [AdminGroupController::class, 'sync'])->name('groups.sync');
     Route::put('/telegram-groups/{id}', [AdminGroupController::class, 'update'])->name('groups.update');
     Route::delete('/telegram-groups/{id}', [AdminGroupController::class, 'destroy'])->name('groups.destroy');
+
+    // User Sent / Submitted Group Links
+    Route::get('/sent-links', [\App\Http\Controllers\Admin\AdminGroupSubmissionController::class, 'index'])->name('group-submissions.index');
+    Route::post('/sent-links/{id}/accept', [\App\Http\Controllers\Admin\AdminGroupSubmissionController::class, 'accept'])->name('group-submissions.accept');
+    Route::post('/sent-links/{id}/reject', [\App\Http\Controllers\Admin\AdminGroupSubmissionController::class, 'reject'])->name('group-submissions.reject');
+    Route::get('/sent-links/{id}/preview', [\App\Http\Controllers\Admin\AdminGroupSubmissionController::class, 'preview'])->name('group-submissions.preview');
+    Route::delete('/sent-links/{id}', [\App\Http\Controllers\Admin\AdminGroupSubmissionController::class, 'destroy'])->name('group-submissions.destroy');
 
     // Products & Offers
     Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');

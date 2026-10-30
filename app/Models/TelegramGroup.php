@@ -46,4 +46,9 @@ class TelegramGroup extends Model
     {
         return $this->hasMany(Product::class, 'group_id');
     }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(GroupSubmission::class, 'telegram_group_id');
+    }
 }

@@ -54,10 +54,8 @@ class HourlySyncTest extends TestCase
         ]);
 
         $mockClient = $this->createMock(TelegramClientService::class);
-        $mockClient->method('getClient')->willReturn(new \danog\MadelineProto\API(
-            storage_path('app/telegram/session.madeline'),
-            (new \danog\MadelineProto\Settings())
-        ));
+        $mockClient->method('getClient')->willReturn(null);
+        $mockClient->method('isInviteLink')->willReturn(false);
         $mockClient->method('getMessages')->willReturn([
             [
                 '_'       => 'message',

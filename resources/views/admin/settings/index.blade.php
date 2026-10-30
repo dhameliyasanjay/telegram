@@ -29,9 +29,41 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
         @foreach($settings as $setting)
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">{{ $setting->label ?: $setting->key }}</label>
+            <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>{{ $setting->label ?: $setting->key }}</span>
+              @if($setting->key === 'subscription_price')
+                <span style="font-size: 0.68rem; padding: 2px 8px; border-radius: 6px; background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); font-weight: 600;">
+                  Synced with 1M Tier
+                </span>
+              @elseif($setting->key === 'sync_interval_minutes')
+                <span style="font-size: 0.68rem; padding: 2px 8px; border-radius: 6px; background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); font-weight: 600;">
+                  Minutes & Hours Supported
+                </span>
+              @endif
+            </label>
 
-            @if($setting->type === 'boolean')
+            @if($setting->key === 'sync_interval_minutes')
+              {{-- Intuitive Minutes & Hours Frequency Selector --}}
+              <div style="display: grid; grid-template-columns: 1fr 100px; gap: 8px;">
+                <select id="sync_preset_select" class="form-input" onchange="onSyncPresetChange(this.value)" style="cursor: pointer;">
+                  <option value="5" {{ (int)$setting->value === 5 ? 'selected' : '' }}>Every 5 Minutes</option>
+                  <option value="10" {{ (int)$setting->value === 10 ? 'selected' : '' }}>Every 10 Minutes</option>
+                  <option value="15" {{ (int)$setting->value === 15 ? 'selected' : '' }}>Every 15 Minutes (Default)</option>
+                  <option value="30" {{ (int)$setting->value === 30 ? 'selected' : '' }}>Every 30 Minutes</option>
+                  <option value="60" {{ (int)$setting->value === 60 ? 'selected' : '' }}>Every 1 Hour (60 Min)</option>
+                  <option value="120" {{ (int)$setting->value === 120 ? 'selected' : '' }}>Every 2 Hours (120 Min)</option>
+                  <option value="360" {{ (int)$setting->value === 360 ? 'selected' : '' }}>Every 6 Hours (360 Min)</option>
+                  <option value="720" {{ (int)$setting->value === 720 ? 'selected' : '' }}>Every 12 Hours (720 Min)</option>
+                  <option value="1440" {{ (int)$setting->value === 1440 ? 'selected' : '' }}>Every 24 Hours / 1 Day</option>
+                  <option value="custom" {{ !in_array((int)$setting->value, [5, 10, 15, 30, 60, 120, 360, 720, 1440]) ? 'selected' : '' }}>Custom Minutes &rarr;</option>
+                </select>
+                <div style="position: relative;">
+                  <input type="number" id="sync_interval_minutes" name="sync_interval_minutes" class="form-input" value="{{ $setting->value }}" min="1" max="10080" required oninput="updateSyncPreview()" style="padding-right: 30px; font-weight: 700; text-align: center;">
+                  <span style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; color: var(--text-dim); pointer-events: none;">min</span>
+                </div>
+              </div>
+              <div id="sync_preview_text" style="font-size: 0.76rem; color: #60a5fa; margin-top: 6px; font-weight: 500;"></div>
+            @elseif($setting->type === 'boolean')
               <div style="margin-top: 8px;">
                 <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #fff;">
                   <input type="hidden" name="form_submitted_security" value="1">
@@ -47,7 +79,16 @@
               <input type="text" name="{{ $setting->key }}" class="form-input" value="{{ $setting->value }}" required>
             @endif
 
-            @if($setting->description)
+            @if($setting->key === 'subscription_price')
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">
+                Monthly subscription price in ₹. Synchronized with the 1-Month plan.
+              </div>
+              <div style="margin-top: 6px;">
+                <a href="{{ route('admin.subscriptions.index') }}" style="display: inline-flex; align-items: center; gap: 4px; color: #60a5fa; font-size: 0.76rem; text-decoration: underline; font-weight: 500;">
+                  <span>Manage all 4 plans (1M, 4M, 6M, 1Y) & discounts</span> &rarr;
+                </a>
+              </div>
+            @elseif($setting->description && $setting->key !== 'sync_interval_minutes')
               <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">
                 {{ $setting->description }}
               </div>
@@ -64,5 +105,45 @@
     </button>
   </div>
 </form>
+
+<script>
+function onSyncPresetChange(val) {
+  const input = document.getElementById('sync_interval_minutes');
+  if (!input) return;
+  if (val !== 'custom') {
+    input.value = val;
+  }
+  updateSyncPreview();
+}
+
+function updateSyncPreview() {
+  const input = document.getElementById('sync_interval_minutes');
+  const preview = document.getElementById('sync_preview_text');
+  const preset = document.getElementById('sync_preset_select');
+  if (!input || !preview) return;
+
+  const mins = parseInt(input.value, 10) || 15;
+  if (preset) {
+    const matchingOption = Array.from(preset.options).find(o => o.value == mins);
+    if (matchingOption) {
+      preset.value = mins;
+    } else {
+      preset.value = 'custom';
+    }
+  }
+
+  if (mins < 60) {
+    preview.innerHTML = `⚡ Crawler will run automatically every <strong>${mins} minute${mins > 1 ? 's' : ''}</strong>.`;
+  } else if (mins % 60 === 0) {
+    const hrs = mins / 60;
+    preview.innerHTML = `⚡ Crawler will run automatically every <strong>${hrs} hour${hrs > 1 ? 's' : ''}</strong>.`;
+  } else {
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    preview.innerHTML = `⚡ Crawler will run automatically every <strong>${hrs}h ${remMins}m</strong> (${mins} minutes).`;
+  }
+}
+document.addEventListener('DOMContentLoaded', updateSyncPreview);
+</script>
 @endsection
 

@@ -38,7 +38,7 @@
         Customer Subscription Orders & Contact Requests
       </h3>
       <p style="font-size: 0.8rem; color: var(--text-dim); margin: 4px 0 0 0;">
-        Direct customer leads who requested Pro access (₹49). Contact them via WhatsApp or call to confirm and click Activate.
+        Direct customer leads who requested Pro access. Contact them via WhatsApp or call to confirm and click Activate.
       </p>
     </div>
     @php

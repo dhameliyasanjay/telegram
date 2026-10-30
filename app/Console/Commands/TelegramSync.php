@@ -72,14 +72,18 @@ class TelegramSync extends Command
             return Command::SUCCESS;
         }
 
-        // Inline Synchronous Execution
-        try {
-            $client = $telegramClient->getClient();
-            $client->start();
-        } catch (\Throwable $e) {
-            $this->error('Failed to initialize Telegram client: ' . $e->getMessage());
-            Log::error('TelegramSync CLI failed to start client: ' . $e->getMessage());
-            return Command::FAILURE;
+        // Inline Execution (with seamless public channel crawler)
+        $hasInviteLinks = $groups->contains(fn($g) => $telegramClient->isInviteLink($g->invite_link));
+        $client = null;
+        if ($hasInviteLinks) {
+            try {
+                $client = $telegramClient->getClient();
+                $client->start();
+            } catch (\Throwable $e) {
+                $this->warn('MTProto client unavailable (' . $e->getMessage() . '). Using fast channel web crawler.');
+                Log::info('TelegramSync CLI: Continuing with web crawler mode: ' . $e->getMessage());
+                $client = null;
+            }
         }
 
         $results = [];
@@ -87,6 +91,7 @@ class TelegramSync extends Command
         foreach ($groups as $group) {
             $this->newLine();
             $this->line("<comment>Syncing: {$group->title} (ID: {$group->id})</comment>");
+            $group->update(['sync_status' => 'syncing']);
 
             $stats = ['scanned' => 0, 'new' => 0, 'updated' => 0, 'skipped' => 0];
 
@@ -118,7 +123,11 @@ class TelegramSync extends Command
                 $bar->finish();
                 $this->newLine();
 
-                $group->update(['last_synced_at' => now()]);
+                $group->update([
+                    'last_synced_at' => now(),
+                    'sync_status'    => 'idle',
+                    'last_error'     => null,
+                ]);
 
                 $results[] = [
                     'id'      => $group->id,
@@ -132,6 +141,10 @@ class TelegramSync extends Command
             } catch (\Throwable $e) {
                 $this->error("Failed syncing {$group->title}: " . $e->getMessage());
                 Log::error("TelegramSync group error [{$group->id}]: " . $e->getMessage());
+                $group->update([
+                    'sync_status' => 'idle',
+                    'last_error'  => mb_substr($e->getMessage(), 0, 500),
+                ]);
             }
 
             // Small delay between groups

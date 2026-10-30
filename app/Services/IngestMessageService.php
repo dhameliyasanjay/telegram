@@ -35,10 +35,10 @@ class IngestMessageService
             return ['action' => 'skipped', 'product' => null];
         }
 
-        // Download photo if media present and client provided
+        // Download photo if media present
         $photoUrl = null;
         $photoHash = null;
-        if ($client && ($parsed['has_media'] ?? false)) {
+        if (($client || !empty($parsed['raw_message']['photo_url'])) && ($parsed['has_media'] ?? false)) {
             $photoUrl = $this->telegramClient->downloadPhoto($client, $parsed['raw_message'] ?? []);
             if ($photoUrl) {
                 $relPath = ltrim(str_replace('/storage/', '', $photoUrl), '/');

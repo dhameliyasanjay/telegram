@@ -401,6 +401,7 @@ class AdminTest extends TestCase
         $routes = [
             '/admin/dashboard',
             '/admin/telegram-groups',
+            '/admin/sent-links',
             '/admin/products',
             '/admin/users',
             '/admin/subscriptions',

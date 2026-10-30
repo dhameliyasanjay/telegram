@@ -3,6 +3,13 @@
 @section('title', 'Telegram Group Management')
 
 @section('header-actions')
+  <form action="{{ route('admin.groups.sync-all') }}" method="POST" style="margin:0; display:inline-block;">
+    @csrf
+    <button type="submit" class="btn btn-secondary" onclick="return confirm('Trigger automated synchronization across all active Telegram groups?')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Sync All Groups
+    </button>
+  </form>
   <button class="btn btn-primary" onclick="openAddGroupModal()">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
     Connect Group / Channel
@@ -250,6 +257,80 @@
   function closeEditGroupModal() {
     document.getElementById('editGroupModal').style.display = 'none';
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Intercept Sync All Groups form to use AJAX with 200 OK
+    const syncAllForm = document.querySelector('form[action="{{ route('admin.groups.sync-all') }}"]');
+    if (syncAllForm) {
+      syncAllForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!confirm('Trigger automated synchronization across all active Telegram groups?')) {
+          return;
+        }
+        const btn = this.querySelector('button[type="submit"]');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="spin-anim" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Syncing All Groups...`;
+
+        fetch(this.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || this.querySelector('input[name="_token"]').value
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (window.showAdminToast) {
+            window.showAdminToast(data.message || 'Batch sync started successfully in background!', 'success');
+          }
+          setTimeout(() => window.location.reload(), 1200);
+        })
+        .catch(err => {
+          if (window.showAdminToast) {
+            window.showAdminToast('Sync request error: ' + err.message, 'error');
+          }
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        });
+      });
+    }
+
+    // Intercept row sync buttons
+    document.querySelectorAll('form[action*="/telegram-groups/"][action$="/sync"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type="submit"]');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="spin-anim" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Syncing...`;
+
+        fetch(this.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || this.querySelector('input[name="_token"]').value
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (window.showAdminToast) {
+            window.showAdminToast(data.message || 'Group sync queued in background!', 'success');
+          }
+          setTimeout(() => window.location.reload(), 1000);
+        })
+        .catch(err => {
+          if (window.showAdminToast) {
+            window.showAdminToast('Error: ' + err.message, 'error');
+          }
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        });
+      });
+    });
+  });
 </script>
 @endsection
 

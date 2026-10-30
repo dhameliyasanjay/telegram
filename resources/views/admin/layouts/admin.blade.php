@@ -225,6 +225,51 @@
     }
 
     /* Alerts & Toasts */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spin-anim {
+      animation: spin 1s linear infinite;
+    }
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .admin-toast {
+      pointer-events: auto;
+      padding: 12px 18px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 500;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.25s ease-out;
+      border: 1px solid transparent;
+    }
+    .admin-toast-success {
+      background: #064e3b;
+      border-color: #059669;
+      color: #a7f3d0;
+    }
+    .admin-toast-error {
+      background: #7f1d1d;
+      border-color: #dc2626;
+      color: #fecaca;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
     .alert-banner {
       padding: 12px 16px;
       border-radius: 10px;
@@ -453,6 +498,18 @@
           Telegram Groups
         </a>
       </li>
+      <li class="nav-item {{ request()->routeIs('admin.group-submissions.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.group-submissions.index') }}">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Sent Group Links
+          @php
+            $pendingLinksCount = \App\Models\GroupSubmission::where('status', 'pending')->count();
+          @endphp
+          @if($pendingLinksCount > 0)
+            <span class="badge badge-warning" style="margin-left: auto; font-size: 0.65rem; padding: 2px 7px;">{{ $pendingLinksCount }}</span>
+          @endif
+        </a>
+      </li>
       <li class="nav-item {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
         <a href="{{ route('admin.products.index') }}">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -555,6 +612,30 @@
       @yield('content')
     </div>
   </div>
+
+  <div id="adminToastContainer" class="toast-container"></div>
+
+  <script>
+    window.showAdminToast = function(message, type = 'success') {
+      const container = document.getElementById('adminToastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `admin-toast admin-toast-${type}`;
+      toast.innerHTML = `
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          ${type === 'success' ? '<path d="M5 13l4 4L19 7"/>' : '<circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>'}
+        </svg>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+  </script>
 
   @yield('scripts')
 </body>
