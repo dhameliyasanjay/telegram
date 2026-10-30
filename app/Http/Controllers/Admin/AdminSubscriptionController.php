@@ -114,6 +114,7 @@ class AdminSubscriptionController extends Controller
         }
 
         $order->status = 'active';
+        $order->paid_at = $order->paid_at ?? now();
         $order->activated_at = now();
         $order->save();
 

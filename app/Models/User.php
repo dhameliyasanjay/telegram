@@ -105,6 +105,16 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function subscriptionOrders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SubscriptionOrder::class);
+    }
+
+    public function subscriptionPayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SubscriptionPayment::class);
+    }
+
     /**
      * Expire all trial and paid subscription access immediately.
      */

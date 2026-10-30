@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 :root {
   --bg: #09090b;
@@ -641,14 +642,14 @@ body.modal-open {
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
           <span>Dashboard</span>
         </a>
-        <a href="/catalogue" class="nav-item">
+        {{-- <a href="/catalogue" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
           <span>Catalogue</span>
-        </a>
+        </a> --}}
       </div>
 
       <!-- Section: Transactions -->
-      <div class="nav-section">
+      {{-- <div class="nav-section">
         <div class="nav-section-title">Transactions</div>
         <a href="/payments" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
@@ -662,7 +663,7 @@ body.modal-open {
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
           <span>Return</span>
         </a>
-      </div>
+      </div> --}}
 
       <!-- Section: Account -->
       <div class="nav-section">
@@ -986,7 +987,7 @@ body.modal-open {
       </div>
     </div>
 
-    <!-- STEP 3: Checkout / Purchase Form -->
+    <!-- STEP 3: Razorpay Checkout / Payment Form -->
     <div id="subPlanOrderStep" style="display: none;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
         <button type="button" onclick="showPlanCardsStep()" style="background: none; border: none; color: #60a5fa; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; padding: 0;">
@@ -997,23 +998,23 @@ body.modal-open {
 
       <div style="margin-bottom: 12px;">
         <div style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px;" id="subOrderTitleText">Activate 1 Month Pro Plan (₹49)</div>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Please provide your contact details to proceed with subscription activation.</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Complete payment via Razorpay to activate full unlimited Telegram price monitoring.</p>
       </div>
 
       <!-- Selected Plan Summary Box -->
-      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <span style="font-size: 0.85rem; color: #fff; font-weight: 600;" id="subOrderSelectedPlanName">Plan: 1 Month (30 Days)</span>
-          <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">Telegram Price Monitor Full Access</div>
+          <span style="font-size: 0.88rem; color: #fff; font-weight: 600;" id="subOrderSelectedPlanName">Plan: 1 Month (30 Days)</span>
+          <div style="font-size: 0.72rem; color: #93c5fd; margin-top: 2px;">✓ Telegram Price Monitor Full Access • Instant Activation</div>
         </div>
         <div style="text-align: right;">
-          <span style="font-size: 1.15rem; color: #60a5fa; font-weight: 700;" id="subOrderSelectedPlanPrice">₹49</span>
+          <span style="font-size: 1.25rem; color: #60a5fa; font-weight: 800;" id="subOrderSelectedPlanPrice">₹49</span>
           <div><a href="javascript:void(0)" onclick="showPlanCardsStep()" style="color:#93c5fd; font-size:0.72rem; text-decoration:underline;">Change Plan</a></div>
         </div>
       </div>
 
       <form id="subOrderForm" onsubmit="event.preventDefault(); submitSubscriptionOrder();">
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px;">
           <div>
             <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Your Full Name <span style="color:#ef4444;">*</span></label>
             <input type="text" id="subOrderName" value="{{ Auth::user()->name }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. Sanjay Patel">
@@ -1022,65 +1023,89 @@ body.modal-open {
           <div>
             <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">WhatsApp / Mobile Number <span style="color:#ef4444;">*</span></label>
             <input type="tel" id="subOrderPhone" value="{{ Auth::user()->phone ?? '' }}" required class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. 9825104231">
-            <span style="font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; display: block;">We will contact you directly on WhatsApp/Call to confirm activation.</span>
+            <span style="font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; display: block;">Used for Razorpay payment receipts and account support.</span>
           </div>
 
-          <div>
-            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">City / Market Location</label>
-            <input type="text" id="subOrderCity" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. Surat, Ahmedabad, Rajkot, Mumbai...">
-          </div>
-
-          <div>
-            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Note / UPI ID (Optional)</label>
-            <input type="text" id="subOrderNotes" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="Any note or payment reference">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">City / Market Location</label>
+              <input type="text" id="subOrderCity" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="e.g. Surat, Mumbai...">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; font-weight: 600;">Note / Reference (Optional)</label>
+              <input type="text" id="subOrderNotes" class="form-input" style="width: 100%; box-sizing: border-box; background: #09090b; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 12px; color: #fff; font-size: 0.88rem;" placeholder="Any note or reference">
+            </div>
           </div>
         </div>
 
+        <!-- Payment Method Badges Preview -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <span>Supported: <strong>UPI (GPay, PhonePe, Paytm), Cards, NetBanking</strong></span>
+          </div>
+          <span style="font-size: 0.72rem; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            🔒 Razorpay Secure
+          </span>
+        </div>
+
+        <!-- Processing State Box -->
+        <div id="subOrderProcessing" style="display: none; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 12px; text-align: center;">
+          <span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></span>
+          <span id="subOrderProcessingText">Connecting to Razorpay Secure Gateway...</span>
+        </div>
+
+        <!-- Error State Box with Retry -->
         <div id="subOrderError" style="display: none; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 12px;"></div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 2px;">
           <button type="button" class="btn btn-ghost" onclick="showPlanCardsStep()">Back</button>
-          <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
-            <span id="subOrderSubmitBtnText">Submit Order & Request Activation (₹49)</span> &rarr;
+          <button type="button" id="subOrderSubmitBtn" onclick="submitSubscriptionOrder()" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; font-weight: 600; padding: 11px 22px; border-radius: 8px; border:none; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.4); display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span id="subOrderSubmitBtnText">Pay with Razorpay (₹49)</span> &rarr;
           </button>
         </div>
-        <div style="font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 8px;">
-          💳 Razorpay payment gateway integration will be added here next.
+        <div style="font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 10px;">
+          🛡️ 256-bit SSL encrypted • Instant verification & plan activation
         </div>
       </form>
     </div>
 
-    <!-- STEP 4: Order Placed Success Confirmation -->
-    <div id="subPlanSuccessStep" style="display: none; text-align: center; padding: 16px 8px;">
-      <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 2px solid #10b981; color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+    <!-- STEP 4: Payment Verified Success Confirmation -->
+    <div id="subPlanSuccessStep" style="display: none; text-align: center; padding: 20px 8px;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 2px solid #10b981; color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
       </div>
-      <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Subscription Request Placed!</h3>
+      <h3 style="font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 6px;">Payment Verified & Pro Active!</h3>
       <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
-        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your request for <strong id="subSuccessDuration" style="color:#60a5fa;">1 Month (30 Days)</strong> has been registered.
+        Thank you, <strong id="subSuccessName" style="color:#fff;">Customer</strong>! Your subscription for <strong id="subSuccessDuration" style="color:#60a5fa;">1 Month (30 Days)</strong> has been activated.
       </p>
 
-      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span>Contact Number:</span>
-          <strong id="subSuccessPhone" style="color: #34d399;">—</strong>
+          <span>Payment ID (Razorpay):</span>
+          <strong id="subSuccessPayId" style="color: #60a5fa; font-family: monospace;">—</strong>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span>Plan Amount:</span>
+          <span>Plan Amount Paid:</span>
           <strong id="subSuccessAmount" style="color: #fff;">₹49.00</strong>
         </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>Access Valid Until:</span>
+          <strong id="subSuccessValidUntil" style="color: #34d399;">—</strong>
+        </div>
         <div style="display: flex; justify-content: space-between;">
-          <span>Status:</span>
-          <span style="color: #fbbf24; font-weight: 600;">Pending Verification (Ready for Razorpay)</span>
+          <span>Subscription Status:</span>
+          <span style="color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">● Pro Active</span>
         </div>
       </div>
 
-      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 10px; padding: 12px 14px; font-size: 0.82rem; color: #93c5fd; margin-bottom: 20px; line-height: 1.5;">
-        💬 Our administrator <strong>Sanjay</strong> has received your contact details and will message/call you on WhatsApp to activate your account.
+      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px 14px; font-size: 0.82rem; color: #34d399; margin-bottom: 20px; line-height: 1.5;">
+        ⚡ All wholesale prices, competitor comparisons, and Telegram group supplier contacts are now unlocked!
       </div>
 
-      <button type="button" class="btn btn-primary" onclick="closeSubscriptionPlanModal()" style="width: 100%; padding: 12px; font-weight: 600; background: #3b82f6; color: #fff; border:none; border-radius: 8px; cursor: pointer;">
-        Back to Dashboard
+      <button type="button" class="btn btn-primary" onclick="closeSubscriptionPlanModal()" style="width: 100%; padding: 12px; font-weight: 600; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border:none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.4);">
+        Access Full Pro Dashboard &rarr;
       </button>
     </div>
 
@@ -2179,7 +2204,7 @@ function showPlanOrderStep() {
   if (planNameEl) planNameEl.innerText = `Plan: Price Monitor Pro — ${plan.name} (${plan.days} Days)`;
   if (planPriceEl) planPriceEl.innerText = `₹${plan.price}`;
   if (planTitleEl) planTitleEl.innerText = `Activate ${plan.name} Pro Plan (₹${plan.price})`;
-  if (submitBtnTextEl) submitBtnTextEl.innerText = `Submit Order & Request Activation (₹${plan.price})`;
+  if (submitBtnTextEl) submitBtnTextEl.innerText = `Pay with Razorpay (₹${plan.price})`;
 
   const box = document.querySelector('#subscriptionPlanModal .modal');
   if (box) box.scrollTop = 0;
@@ -2189,12 +2214,16 @@ function showPlanOrderStep() {
   }, 100);
 }
 
+let activeRazorpayOrder = null;
+
 async function submitSubscriptionOrder() {
   const nameInput = document.getElementById('subOrderName');
   const phoneInput = document.getElementById('subOrderPhone');
   const cityInput = document.getElementById('subOrderCity');
   const notesInput = document.getElementById('subOrderNotes');
   const errBox = document.getElementById('subOrderError');
+  const procBox = document.getElementById('subOrderProcessing');
+  const procText = document.getElementById('subOrderProcessingText');
   const btn = document.getElementById('subOrderSubmitBtn');
 
   const name = nameInput ? nameInput.value.trim() : '';
@@ -2214,13 +2243,17 @@ async function submitSubscriptionOrder() {
   const plan = SUBSCRIPTION_PLANS[selectedPlanKey] || SUBSCRIPTION_PLANS['1_month'];
 
   if (errBox) errBox.style.display = 'none';
+  if (procBox) {
+    if (procText) procText.innerText = 'Creating Razorpay secure payment order...';
+    procBox.style.display = 'block';
+  }
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;"></span> Placing order...';
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;"></span> Preparing Checkout...';
   }
 
   try {
-    const res = await fetch('/subscription/purchase', {
+    const res = await fetch('/subscription/razorpay/order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2232,18 +2265,164 @@ async function submitSubscriptionOrder() {
         name: name,
         phone: phone,
         city: city,
-        notes: notes,
-        payment_method: 'Razorpay (Pending Integration) / Direct Request'
+        notes: notes
       })
     });
 
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      const errMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Failed to submit order');
-      throw new Error(errMsg);
+    const orderData = await res.json();
+    if (!res.ok || !orderData.success) {
+      throw new Error(orderData.message || 'Failed to initialize payment order with server.');
     }
 
-    // Switch to step 4 (Success)
+    activeRazorpayOrder = orderData;
+    launchRazorpayCheckout(orderData);
+
+  } catch (err) {
+    if (procBox) procBox.style.display = 'none';
+    if (errBox) {
+      errBox.innerHTML = `<strong>Payment Initiation Failed:</strong> ${err.message || 'Could not connect to payment gateway.'}`;
+      errBox.style.display = 'block';
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span id="subOrderSubmitBtnText">Retry with Razorpay (₹${plan.price})</span> &rarr;`;
+    }
+  }
+}
+
+function launchRazorpayCheckout(orderData) {
+  const plan = SUBSCRIPTION_PLANS[selectedPlanKey] || SUBSCRIPTION_PLANS['1_month'];
+  const btn = document.getElementById('subOrderSubmitBtn');
+  const errBox = document.getElementById('subOrderError');
+  const procBox = document.getElementById('subOrderProcessing');
+  const procText = document.getElementById('subOrderProcessingText');
+
+  // If in placeholder / sandbox simulation mode (waiting for user domain & live API keys):
+  if (orderData.is_placeholder) {
+    if (procBox && procText) {
+      procText.innerText = '⚡ Test Mode Active (Domain Pending) — Completing simulated payment...';
+      procBox.style.display = 'block';
+    }
+    if (btn) {
+      btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;"></span> Activating Subscription...';
+    }
+
+    const simPaymentId = 'pay_sim_' + Math.random().toString(36).substring(2, 12);
+    const simSignature = 'mock_sig_' + Math.random().toString(36).substring(2, 16);
+
+    setTimeout(() => {
+      verifyRazorpayPayment({
+        razorpay_order_id: orderData.razorpay_order_id,
+        razorpay_payment_id: simPaymentId,
+        razorpay_signature: simSignature,
+        order_id: orderData.order_id
+      }, orderData);
+    }, 1200);
+    return;
+  }
+
+  // Official Razorpay Standard Checkout
+  if (typeof Razorpay === 'undefined') {
+    if (procBox) procBox.style.display = 'none';
+    if (errBox) {
+      errBox.innerText = 'Razorpay checkout script failed to load. Please check your internet connection.';
+      errBox.style.display = 'block';
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span id="subOrderSubmitBtnText">Retry Payment (₹${plan.price})</span> &rarr;`;
+    }
+    return;
+  }
+
+  if (procBox) procBox.style.display = 'none';
+
+  const options = {
+    key: orderData.key_id,
+    amount: orderData.amount,
+    currency: orderData.currency || 'INR',
+    name: 'Price Monitor Pro',
+    description: `${orderData.plan_name} (${orderData.duration_days} Days)`,
+    order_id: orderData.razorpay_order_id,
+    prefill: {
+      name: orderData.customer.name,
+      email: orderData.customer.email,
+      contact: orderData.customer.phone
+    },
+    theme: {
+      color: '#2563eb'
+    },
+    modal: {
+      ondismiss: function () {
+        if (procBox) procBox.style.display = 'none';
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<span id="subOrderSubmitBtnText">Retry Payment (₹${plan.price})</span> &rarr;`;
+        }
+        toast('Payment window closed. You can retry when ready.', 'info');
+      }
+    },
+    handler: async function (response) {
+      // response: { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+      await verifyRazorpayPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        order_id: orderData.order_id
+      }, orderData);
+    }
+  };
+
+  const rzp = new Razorpay(options);
+
+  rzp.on('payment.failed', function (response) {
+    if (procBox) procBox.style.display = 'none';
+    if (errBox) {
+      const desc = response.error ? (response.error.description || response.error.reason) : 'Payment was declined or cancelled.';
+      const code = response.error ? (response.error.code || 'PAYMENT_FAILED') : 'FAILED';
+      errBox.innerHTML = `<strong>Payment Failed:</strong> ${desc} <span style="font-size:0.7rem;opacity:0.8;">(${code})</span>`;
+      errBox.style.display = 'block';
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span id="subOrderSubmitBtnText">Retry Payment (₹${plan.price})</span> &rarr;`;
+    }
+  });
+
+  rzp.open();
+}
+
+async function verifyRazorpayPayment(payload, orderData) {
+  const btn = document.getElementById('subOrderSubmitBtn');
+  const errBox = document.getElementById('subOrderError');
+  const procBox = document.getElementById('subOrderProcessing');
+  const procText = document.getElementById('subOrderProcessingText');
+  const plan = SUBSCRIPTION_PLANS[selectedPlanKey] || SUBSCRIPTION_PLANS['1_month'];
+
+  if (procBox) {
+    if (procText) procText.innerText = 'Verifying signature & activating subscription...';
+    procBox.style.display = 'block';
+  }
+
+  try {
+    const res = await fetch('/subscription/razorpay/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const verifyData = await res.json();
+    if (!res.ok || !verifyData.success) {
+      throw new Error(verifyData.message || 'Signature verification failed.');
+    }
+
+    if (procBox) procBox.style.display = 'none';
+
+    // Transition to STEP 4: Success
     const v = document.getElementById('subPlanViewStep');
     const c = document.getElementById('subPlanCardsStep');
     const o = document.getElementById('subPlanOrderStep');
@@ -2253,27 +2432,54 @@ async function submitSubscriptionOrder() {
     if (o) o.style.display = 'none';
     if (s) s.style.display = 'block';
 
-    const pElem = document.getElementById('subSuccessPhone');
+    const pElem = document.getElementById('subSuccessPayId');
     const nElem = document.getElementById('subSuccessName');
     const aElem = document.getElementById('subSuccessAmount');
     const dElem = document.getElementById('subSuccessDuration');
-    if (pElem) pElem.innerText = phone;
-    if (nElem) nElem.innerText = name;
+    const endsElem = document.getElementById('subSuccessValidUntil');
+
+    if (pElem) pElem.innerText = payload.razorpay_payment_id || 'Captured';
+    if (nElem) nElem.innerText = (orderData && orderData.customer && orderData.customer.name) ? orderData.customer.name : 'Customer';
     if (aElem) aElem.innerText = `₹${plan.price}.00`;
     if (dElem) dElem.innerText = `${plan.name} (${plan.days} Days)`;
+    if (endsElem) endsElem.innerText = verifyData.subscription_ends_at || '30 Days Extended';
 
-    toast(`Subscription order for ${plan.name} placed successfully!`, 'success');
+    // Unlock Pro access across the UI instantly
+    unlockProFeaturesInUI(verifyData.subscription_ends_at);
+
+    toast(`🎉 Pro Plan Activated successfully! (Paid: ₹${plan.price})`, 'success');
+
   } catch (err) {
+    if (procBox) procBox.style.display = 'none';
     if (errBox) {
-      errBox.innerText = err.message || 'An error occurred while submitting your order.';
+      errBox.innerHTML = `<strong>Verification Error:</strong> ${err.message || 'Payment could not be verified by server.'}`;
       errBox.style.display = 'block';
     }
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = `<span id="subOrderSubmitBtnText">Submit Order & Request Activation (₹${plan.price})</span> &rarr;`;
+      btn.innerHTML = `<span id="subOrderSubmitBtnText">Pay with Razorpay (₹${plan.price})</span> &rarr;`;
     }
   }
+}
+
+function unlockProFeaturesInUI(validUntilDate) {
+  // Update header pill
+  const pill = document.querySelector('.user-plan-pill');
+  if (pill) {
+    pill.className = 'user-plan-pill pro';
+    pill.innerHTML = `✦ Pro Plan Active`;
+    pill.style.background = 'rgba(16, 185, 129, 0.15)';
+    pill.style.color = '#34d399';
+    pill.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    pill.style.cursor = 'default';
+  }
+  // Remove blur filter from any offer elements
+  document.querySelectorAll('.offer-price.blur-text, .blur-text').forEach(el => {
+    el.classList.remove('blur-text');
+  });
+  // Close trial popup if open
+  closeTrialExpiredModal();
 }
 
 async function addGroup() {

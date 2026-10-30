@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatalogueController;
+use App\Http\Controllers\RazorpayPaymentController;
 use App\Http\Controllers\SseController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -49,7 +50,13 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/returns', [TransactionController::class, 'returnsIndex'])->name('returns');
 
     Route::post('/subscription/purchase', [\App\Http\Controllers\SubscriptionController::class, 'purchase'])->name('subscription.purchase');
+    Route::post('/subscription/razorpay/order', [RazorpayPaymentController::class, 'createOrder'])->name('subscription.razorpay.order');
+    Route::post('/subscription/razorpay/verify', [RazorpayPaymentController::class, 'verifyPayment'])->name('subscription.razorpay.verify');
+    Route::get('/subscription/orders/{order}/status', [RazorpayPaymentController::class, 'getStatus'])->name('subscription.orders.status');
 });
+
+// ── Razorpay Webhook (Exempt from CSRF & Session Auth) ──────────────────────
+Route::post('/webhooks/razorpay', [RazorpayPaymentController::class, 'handleWebhook'])->name('webhooks.razorpay');
 
 // ── Dedicated Admin Authentication Routes ────────────────────────────────────
 Route::prefix('admin')->name('admin.')->group(function () {

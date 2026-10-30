@@ -260,14 +260,14 @@ td { padding:14px 16px; font-size:14px; vertical-align:middle; }
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
           <span>Dashboard</span>
         </a>
-        <a href="/catalogue" class="nav-item active">
+        {{-- <a href="/catalogue" class="nav-item active">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
           <span>Catalogue</span>
-        </a>
+        </a> --}}
       </div>
 
       <!-- Section: Transactions -->
-      <div class="nav-section">
+      {{-- <div class="nav-section">
         <div class="nav-section-title">Transactions</div>
         <a href="/payments" class="nav-item">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
@@ -281,7 +281,7 @@ td { padding:14px 16px; font-size:14px; vertical-align:middle; }
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
           <span>Return</span>
         </a>
-      </div>
+      </div> --}}
 
       <!-- Section: Account -->
       <div class="nav-section">
