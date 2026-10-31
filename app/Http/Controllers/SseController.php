@@ -13,7 +13,22 @@ class SseController extends Controller
      */
     public function stream(Request $request)
     {
-        return response()->stream(function () {
+        // 1. Release session lock immediately so other requests from this user don't block
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        // On PHP CLI built-in server (php artisan serve), it is single-threaded on Windows.
+        // A long-lived loop blocks ALL other incoming requests (tabs, clicks, admin, login).
+        // Under CLI server, we run a short burst (2-3 seconds max) and tell client to reconnect,
+        // freeing the worker process immediately.
+        $isCliServer = php_sapi_name() === 'cli-server';
+        $maxIterations = $isCliServer ? 2 : 30;
+
+        return response()->stream(function () use ($maxIterations) {
             // Send initial ping to establish connection
             echo "event: ping\n";
             echo "data: {\"ts\":\"" . now()->toIso8601String() . "\"}\n\n";
@@ -47,9 +62,9 @@ class SseController extends Controller
                     $lastEventTime = time();
                 }
 
-                // Break after 5 minutes — client will reconnect automatically
+                // Break and tell client to reconnect
                 $iteration++;
-                if ($iteration >= 300) { // 300 × 1s = 5 min
+                if ($iteration >= $maxIterations) {
                     echo "event: reconnect\n";
                     echo "data: {}\n\n";
                     flush();
@@ -59,10 +74,10 @@ class SseController extends Controller
                 sleep(1);
             }
         }, 200, [
-            'Content-Type'  => 'text/event-stream',
-            'Cache-Control' => 'no-cache, no-store',
+            'Content-Type'      => 'text/event-stream',
+            'Cache-Control'     => 'no-cache, no-store, must-revalidate',
             'X-Accel-Buffering' => 'no',
-            'Connection'    => 'keep-alive',
+            'Connection'        => 'keep-alive',
         ]);
     }
 }

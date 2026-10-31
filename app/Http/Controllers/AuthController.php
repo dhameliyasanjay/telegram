@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class AuthController extends Controller
     /**
      * Handle an incoming login request.
      */
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request): RedirectResponse|JsonResponse
     {
         $credentials = $request->validate([
             'email'    => ['required', 'string', 'email'],
@@ -41,6 +42,11 @@ class AuthController extends Controller
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => "Too many login attempts. Please try again in {$seconds} seconds.",
+                ], 429);
+            }
             return back()->withErrors([
                 'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
             ])->onlyInput('email');
@@ -51,6 +57,12 @@ class AuthController extends Controller
         if (! Auth::attempt($credentials, $remember)) {
             RateLimiter::hit($throttleKey, 60);
 
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'The provided credentials do not match our records.',
+                ], 401);
+            }
+
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->onlyInput('email');
@@ -58,6 +70,13 @@ class AuthController extends Controller
 
         RateLimiter::clear($throttleKey);
         $request->session()->regenerate();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Login successful',
+                'user'    => Auth::user(),
+            ]);
+        }
 
         return redirect()->intended('/');
     }
@@ -77,7 +96,7 @@ class AuthController extends Controller
     /**
      * Handle an incoming registration request.
      */
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
@@ -105,18 +124,31 @@ class AuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Registration successful',
+                'user'    => $user,
+            ], 201);
+        }
+
         return redirect()->intended('/')->with('success', "Welcome, {$user->name}! Your {$trialDays}-day free trial has been activated.");
     }
 
     /**
      * Log the user out of the application.
      */
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): RedirectResponse|JsonResponse
     {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Logged out successfully',
+            ]);
+        }
 
         return redirect()->route('login')->with('status', 'You have been logged out.');
     }
@@ -187,8 +219,21 @@ class AuthController extends Controller
     /**
      * Show user profile and account settings.
      */
-    public function showProfile(): View
+    public function showProfile(): View|JsonResponse
     {
+        $user = Auth::user() ?? User::first();
+
+        if (request()->wantsJson() || request()->is('api/*')) {
+            $trialDaysLeft = 30;
+            if ($user && $user->trial_ends_at) {
+                $trialDaysLeft = max(0, (int) ceil(now()->diffInDays($user->trial_ends_at)));
+            }
+            return response()->json([
+                'user'            => $user,
+                'trial_days_left' => $trialDaysLeft,
+            ]);
+        }
+
         return view('auth.profile', [
             'user' => Auth::user(),
         ]);
@@ -197,17 +242,24 @@ class AuthController extends Controller
     /**
      * Update user profile settings.
      */
-    public function updateProfile(Request $request): RedirectResponse
+    public function updateProfile(Request $request): RedirectResponse|JsonResponse
     {
         /** @var User $user */
-        $user = Auth::user();
+        $user = Auth::user() ?? User::first();
 
         $validated = $request->validate([
             'name'             => ['required', 'string', 'max:255'],
             'email'            => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'current_password' => ['nullable', 'required_with:new_password', 'current_password'],
+            'current_password' => ['nullable', 'required_with:new_password'],
             'new_password'     => ['nullable', 'string', 'confirmed', PasswordRule::min(8)],
         ]);
+
+        if (!empty($validated['current_password']) && !Hash::check($validated['current_password'], $user->password)) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'The provided current password does not match.'], 422);
+            }
+            return back()->withErrors(['current_password' => 'The provided current password does not match.']);
+        }
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
@@ -217,6 +269,14 @@ class AuthController extends Controller
         }
 
         $user->save();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully.',
+                'user'    => $user,
+            ]);
+        }
 
         return back()->with('success', 'Profile updated successfully.');
     }

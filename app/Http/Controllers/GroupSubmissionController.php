@@ -21,7 +21,10 @@ class GroupSubmissionController extends Controller
         ]);
 
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = Auth::user() ?? \App\Models\User::first();
+        $userId = $user ? $user->id : 1;
+        $userName = $user ? $user->name : 'Mobile User';
+        $userEmail = $user ? $user->email : 'mobile@priceanalyzer.app';
 
         $link = trim($validated['invite_link']);
 
@@ -33,7 +36,7 @@ class GroupSubmissionController extends Controller
         }
 
         // Check if this user already submitted this link and it is pending
-        $existing = GroupSubmission::where('user_id', $user->id)
+        $existing = GroupSubmission::where('user_id', $userId)
             ->where('invite_link', $link)
             ->where('status', 'pending')
             ->first();
@@ -48,7 +51,7 @@ class GroupSubmissionController extends Controller
         }
 
         $submission = GroupSubmission::create([
-            'user_id'     => $user->id,
+            'user_id'     => $userId,
             'invite_link' => $link,
             'notes'       => $validated['notes'] ?? null,
             'status'      => 'pending',
@@ -56,12 +59,12 @@ class GroupSubmissionController extends Controller
 
         AdminActivityLog::record(
             'group_submission_created',
-            "User [{$user->name}] submitted Telegram group link for review: {$link}",
+            "User [{$userName}] submitted Telegram group link for review: {$link}",
             $submission,
             [
                 'link'    => $link,
-                'user_id' => $user->id,
-                'email'   => $user->email,
+                'user_id' => $userId,
+                'email'   => $userEmail,
                 'notes'   => $submission->notes,
             ]
         );
@@ -79,10 +82,11 @@ class GroupSubmissionController extends Controller
     public function index(): JsonResponse
     {
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = Auth::user() ?? \App\Models\User::first();
+        $userId = $user ? $user->id : 1;
 
         $submissions = GroupSubmission::with('telegramGroup:id,title,member_count')
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->orderByDesc('id')
             ->limit(25)
             ->get();

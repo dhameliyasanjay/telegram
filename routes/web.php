@@ -115,3 +115,39 @@ Route::prefix('admin')->middleware(['admin'])->name('admin.')->group(function ()
     Route::get('/activity-logs', [AdminActivityLogController::class, 'index'])->name('activity-logs.index');
 });
 
+// ── Telegram Photos Route (Fallback placeholder if file not copied yet) ─────
+Route::get('/storage/telegram/{file}', function ($file) {
+    $path = storage_path('app/public/telegram/' . $file);
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+
+    if (function_exists('imagecreate')) {
+        $im = imagecreate(300, 300);
+        $bg = imagecolorallocate($im, 24, 24, 27); // #18181b
+        $fg = imagecolorallocate($im, 161, 161, 170); // #a1a1aa
+        $gray = imagecolorallocate($im, 63, 63, 70); // #3f3f46
+        imagestring($im, 5, 85, 130, 'Price Analyzer', $fg);
+        imagestring($im, 3, 90, 155, 'Product Photo', $gray);
+        ob_start();
+        imagepng($im);
+        $pngData = ob_get_clean();
+        imagedestroy($im);
+
+        return response($pngData, 200, [
+            'Content-Type'  => 'image/png',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+        <rect width="100%" height="100%" fill="#18181b"/>
+        <text x="50%" y="150" font-family="sans-serif" font-size="14" fill="#a1a1aa" text-anchor="middle">Product Photo</text>
+    </svg>';
+
+    return response($svg, 200, [
+        'Content-Type' => 'image/svg+xml',
+        'Cache-Control' => 'no-cache, private',
+    ]);
+})->where('file', '.*')->name('telegram.photo.fallback');
+
